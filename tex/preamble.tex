@@ -1,0 +1,202 @@
+\usepackage[utf8]{inputenc}
+% \usepackage[T1]{fontenc}
+\usepackage[total={6.2in, 8in}]{geometry}
+
+\usepackage{amsmath, amsthm, amssymb,amsfonts, mathtools}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage[percent]{overpic} %writing over pictures
+\usepackage{xcolor}
+\usepackage{appendix}
+
+\usepackage{mdframed}
+\usepackage[colorlinks,urlcolor=blue]{hyperref}
+\usepackage{verbatim}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{fancyvrb}
+\usepackage[outputdir=_build]{minted}
+\renewcommand{\MintedPygmentize}{pygmentize}
+\usepackage[ruled,linesnumbered]{algorithm2e}
+\setlength{\algomargin}{10pt}
+\usepackage[normalem]{ulem}
+\usepackage{varwidth}
+
+\usepackage{biblatex}
+\addbibresource{references.bib}
+
+% \usepackage{biblatex}
+% \CatchFileDef{\daybookbib}{|echo $PROJECT_ROOT/daybook.bib}{}
+% % \input{\preamble}
+% \addbibresource{\daybookbib}
+
+\usepackage{listings}
+\usepackage{tikz-cd}
+\usepackage{enumitem}
+\usepackage{tikzsymbols}
+\usepackage{array}
+
+% Table formatters
+\newcolumntype{L}[1]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{R}[1]{>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+
+\lstset{
+basicstyle=\small\ttfamily,
+columns=flexible,
+breaklines=true
+}
+\usepackage{tikz}
+\usepackage{lastpage}
+\usepackage{datetime}
+% Set the date format to DD.MM.YYYY
+\renewcommand{\dateseparator}{.}
+\newdateformat{localdate}{\twodigit{\THEDAY}.\twodigit{\THEMONTH}.\THEYEAR}
+
+\setlength{\parindent}{0pt}
+
+\newcommand{\ket}[1]{\left|{#1}\right\rangle}
+\newcommand{\bra}[1]{\left\langle{#1}\right|}
+\newcommand{\BS}{\backslash}
+
+\newcommand{\CLR}[2]{\begingroup\color{#1}#2\endgroup}
+\newcommand{\R}[1]{\begingroup\color{red}#1\endgroup}
+\newenvironment{GREEN}{\begingroup\color{green}}{\endgroup}
+\newcommand{\G}[1]{\begin{GREEN}#1\end{GREEN}}
+\definecolor{darkgreen}{rgb}{0.0, 0.5, 0.0} % Example RGB for dark green
+\newenvironment{DARKGREEN}{\begingroup\color{darkgreen}}{\endgroup}
+\newcommand{\DG}[1]{\begin{DARKGREEN}#1\end{DARKGREEN}}
+\newenvironment{GREY}{\begingroup\color{gray}}{\endgroup}
+\newcommand{\GR}[1]{\begin{GREY}#1\end{GREY}}
+\newenvironment{BLUE}{\begingroup\color{blue}}{\endgroup}
+\newcommand{\B}[1]{\begin{BLUE}#1\end{BLUE}}
+\newcommand{\Y}[1]{\begingroup\color{yellow}#1\endgroup}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Rational}{\mathbb{R}}
+\newcommand{\Rat}{\mathbb{R}}
+\newcommand{\Pow}{\mathbb{P}}
+
+% Question counters
+\newcounter{QuestionCounter}
+\newcommand{\QuestionColor}{DARKGREEN}
+\newcommand{\QuestionColorName}{dark green}
+\newenvironment{QUESTION}{%
+  \stepcounter{QuestionCounter}\vsp\begin{\QuestionColor}\textbf{Question \theQuestionCounter}: }{%
+  \end{\QuestionColor}}
+
+\newcommand{\Q}[1]{\begin{QUESTION}#1\end{QUESTION}}
+
+\newcommand{\vsp}[0]{\vspace*{10pt}\par}
+\newcommand{\tcite}[1]{\textit{(\citefield{#1}{year}, \citeauthor{#1})}\:\textit{``\citefield{#1}{title}''}\:\cite{#1}}
+\newcommand{\exercise}[1]{\subsubsection*{#1}}
+\newcommand{\ans}[0]{\vsp\textbf{Answer: }\vsp}
+\newcommand{\problem}[0]{\vsp\textbf{Problem: }\vsp}
+\newcommand{\unsure}[0]{TODO: (\textbf{unsure}) }
+
+\newcommand{\JProg}{\mathbb{J}}
+\newcommand{\AST}{\mathbb{AST}}
+\newcommand{\TNET}{\mathbb{TNET}}
+\newcommand{\CV}{\Rational^N}
+\newcommand{\U}[1]{{\underline{#1}}}
+\newcommand{\REM}[1]{\tcp*{\parbox[t]{2.0in}{\raggedright #1}}}
+
+\newcommand{\toto}[0]{\begin{array}{c}\rightarrow \\[-1.9ex]\rightarrow\end{array}}
+
+\newcommand{\ei}{\item}
+\newcommand{\es}{\begin{enumerate}[label=(\alph*)]\ei}
+\newcommand{\ee}{\end{enumerate}}
+
+\newcommand{\ls}{\begin{itemize}\item}
+\newcommand{\li}{\item}
+\renewcommand{\le}{\end{itemize}}
+
+% Define \set{} command. TODO: Looks too complicated!
+\DeclarePairedDelimiterX{\set}[1]{\{}{\}}{\setargs{#1}}
+\NewDocumentCommand{\setargs}{>{\SplitArgument{1}{;}}m}
+{\setargsaux#1}
+\NewDocumentCommand{\setargsaux}{mm}
+{\IfNoValueTF{#2}{#1} {#1\,\delimsize|\,\mathopen{}#2}}%{#1\:;\:#2}
+
+% Generic environment for code snippets
+\newenvironment{codeverbatim}
+  {\VerbatimEnvironment
+   \begin{minted}[autogobble,breaklines,fontsize=\footnotesize]{latex}}
+  {\end{minted}}
+\BeforeBeginEnvironment{codeverbatim}{\begin{mdframed}[nobreak=true,frametitle=\tiny{Source}]}
+\AfterEndEnvironment{codeverbatim}{\end{mdframed}}
+
+% LitREPL-compatible environment for code snippets
+\newenvironment{cpp}
+  {\VerbatimEnvironment
+   \begin{minted}[autogobble,breaklines,fontsize=\footnotesize]{cpp}}
+  {\end{minted}}
+\BeforeBeginEnvironment{cpp}{\begin{mdframed}[nobreak=false,everyline=true,frametitle=\tiny{C++}]}
+\AfterEndEnvironment{cpp}{\end{mdframed}}
+
+% LitREPL-compatible environment for code snippets
+\newenvironment{python}
+  {\VerbatimEnvironment
+   \begin{minted}[autogobble,breaklines,fontsize=\footnotesize]{python}}
+  {\end{minted}}
+\BeforeBeginEnvironment{python}{\begin{mdframed}[nobreak=false,everyline=true]}
+\AfterEndEnvironment{python}{\end{mdframed}}
+
+% LitREPL-compatible environment for code snippets
+\newenvironment{sh}
+  {\VerbatimEnvironment
+   \begin{minted}[autogobble,breaklines,fontsize=\footnotesize]{sh}}
+  {\end{minted}}
+\BeforeBeginEnvironment{sh}{\begin{mdframed}[nobreak=false,everyline=true,frametitle=\tiny{Shell}]}
+\AfterEndEnvironment{sh}{\end{mdframed}}
+
+% LitREPL-compatible environment for code snippets
+\newenvironment{codeai}
+  {\VerbatimEnvironment
+   \begin{minted}[autogobble,breaklines,fontsize=\footnotesize]{text}}
+  {\end{minted}}
+\BeforeBeginEnvironment{codeai}{\begin{mdframed}[nobreak=true,frametitle=\tiny{AI}]}
+\AfterEndEnvironment{codeai}{\end{mdframed}}
+
+% LitREPL-compatible ai secitons
+\newenvironment{ai}
+  {\vsp\textbf{User:}\vsp}
+  {}
+\newenvironment{airesult}
+  {\vsp\textbf{AI:}\vsp}
+  {}
+
+% LitREPL-compatible environment for code results
+\newenvironment{result}
+  {\VerbatimEnvironment
+   \begin{minted}[autogobble,breaklines,fontsize=\footnotesize]{text}}
+  {\end{minted}}
+\BeforeBeginEnvironment{result}{\begin{mdframed}[nobreak=true,frametitle=\tiny{Result}]}
+\AfterEndEnvironment{result}{\end{mdframed}}
+
+% LitREPL-compatible command for inline code results
+\newcommand{\linline}[2]{#2}
+\newcommand{\st}[1]{\sout{#1}}
+\renewcommand{\t}[1]{\texttt{#1}}
+
+% Url replacement for href
+% https://tex.stackexchange.com/a/35314/232633
+\makeatletter
+\renewcommand*{\u}{\begingroup\@makeother\%\@myhref}
+\newcommand*{\@myhref}[2]{\href{#2}{#1}\endgroup}
+\makeatother
+
+% redefine \VerbatimInput
+\RecustomVerbatimCommand{\verbatiminput}{VerbatimInput}%
+{fontsize=\footnotesize,
+ %
+ % frame=lines,  % top and bottom rule only
+ framesep=2em, % separation between frame and text
+ rulecolor=\color{Gray},
+ %
+ label=\fbox{\color{Black}data.txt},
+ labelposition=topline,
+ %
+ commandchars=\|\(\), % escape character and argument delimiters for
+                      % commands within the verbatim
+ commentchar=*        % comment character
+}

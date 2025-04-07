@@ -1,0 +1,88 @@
+\section{The problem statement}
+
+This document contains the solution for the following problem. Sergei's questions are rendered in
+\begin{\QuestionColor}\QuestionColorName\ color\end{\QuestionColor}.
+
+\vsp
+
+Your task is to \textbf{set up a distance 3 surface code using PennyLane}. If you are not familiar
+with Surface Codes, this may be a very useful resource: \url{https://arxiv.org/pdf/1404.3747}. Try
+to simulate \textbf{at least one cycle of the quantum error correction scheme} and give a quick
+interpretation of the results. Try \textbf{adding some noise to the circuit} (for example, add a
+random bit-flip in the circuit), and see what happens to the measurement. You should
+\textbf{describe in words how the decoding would happen}. If you have the extra time, feel free to
+also implement some \textbf{simple decoding protocols}. The expected output of this exercise is a
+Jupyter Notebook. But feel free to deliver your answer in whichever medium you see fit. Most
+importantly, try to learn about quantum error correction and give us an insight into the way you
+tackle difficult, unseen problems.
+
+
+\section{Literature overview}
+
+\ls \u{Low-distance Surface Codes under Realistic Quantum Noise}{https://arxiv.org/pdf/1404.3747}
+    by Yu Tomita and Krysta M. Svore (2014). References:
+    \ls \t{[2]} \u{Quantum Error Correction}{https://arxiv.org/pdf/1910.03672}
+        by Todd A. Brunn
+    \li \t{[6]} \u{Surface codes: Towards practical large-scale quantum computation}{https://arxiv.org/pdf/1208.0928}
+        by Austin G. Fowler (2012)
+    \le
+\li \u{Wiki about the Shor code}{https://en.wikipedia.org/wiki/Quantum_error_correction\#Shor_code}
+\li IQC 2024 Lecture 29 \u{Quantum Error Correction: Surface Codes}{https://opencourse.inf.ed.ac.uk/sites/default/files/https/opencourse.inf.ed.ac.uk/iqc/2024/iqclecture29_0.pdf}
+\li \tcite{Nielsen2010}
+\le
+
+
+
+\section{Initial thoughts}
+
+
+\vsp
+\textbf{Quantum error correction codes}
+\vsp
+
+Quantum error correction codes (QECC) are techniques used to protect quantum information from errors
+due to decoherence, noise, and other quantum imperfections. They work by encoding logical quantum
+bits (qubits) into a larger number of physical qubits, allowing for the detection and correction of
+errors that can occur during quantum computation or storage.
+
+\vsp
+\textbf{Common error correction codes}
+\vsp
+
+\begin{enumerate}
+  \item \textbf{Bit-flip code:} One of the simplest quantum error correction codes, the bit-flip
+  code protects against bit-flip errors by encoding each logical qubit using three physical qubits.
+
+  \item \textbf{Phase-flip code:} Similar to the bit-flip code, the phase-flip code protects against
+  phase-flip errors by encoding each logical qubit using three physical qubits.
+
+  \item \textbf{Shor code:} The Shor code is a 9-qubit code that can protect against both bit-flip
+  and phase-flip errors, essentially combining the bit-flip and phase-flip codes.
+
+  \item \textbf{Steane code:} The Steane code is a 7-qubit code that can correct arbitrary
+  single-qubit errors. It is based on classical error-correcting codes and is more efficient than
+  the Shor code.
+
+  \item \textbf{Five-qubit code:} Also known as the perfect code, this is the smallest possible code
+  that can correct arbitrary single-qubit errors, using just five physical qubits to encode one
+  logical qubit.
+
+  \item \textbf{Surface codes:} Surface codes are defined on a lattice and are known for their high
+  threshold for error tolerance and efficient implementation.
+\end{enumerate}
+
+
+\begin{QUESTION}
+One thing which is not very clear for me: what overall usage scheme should I aim at? I saw two
+candidates:
+
+\ls Get 1-qubit quantum state $\ket{\psi} = \alpha\ket{0} + \beta\ket{1}$ as input, encode it using
+    QECC into the superposition of logical states $\ket{\psi_L} = \alpha\ket{0_L} + \beta\ket{1_L}$.
+    Pass through a noisy quantum channel and decode back into the original $\ket{\psi}$.
+\li Initialize the logical qubit with the logical zero state $\ket{0_L}$. Apply logical operations
+    such as $X_L$, $Z_L$ or others (TODO: which exactly?) to perform fault-tolerant
+    computations, e.g. obtain a desired $\ket{\psi_L}$. Measure it and interpret the results in an
+    algorithm-specific way.
+\le
+\end{QUESTION}
+
