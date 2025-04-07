@@ -87,3 +87,13 @@ candidates.
 \le
 \end{QUESTION}
 
+
+\section{Implementation notes}
+
+\ls \href{https://discuss.pennylane.ai/t/how-to-reset-a-specific-qubit-to-0-during-computation/1871/17}{Unfortunately},
+    \st{it seems that Pennylane doest not have mid-circuit qubit resets yet}.  V 0.40.40 says
+    \t{qml.measure} has a \t{reset=True} parameter
+    (\href{https://docs.pennylane.ai/en/stable/introduction/dynamic_quantum_circuits.html#conditional-operators}{link}).
+\le
+
+
