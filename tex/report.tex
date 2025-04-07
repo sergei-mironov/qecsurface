@@ -73,15 +73,16 @@ errors that can occur during quantum computation or storage.
 
 
 \begin{QUESTION}
-One thing which is not very clear for me: what overall usage scheme should I aim at? I saw two
-candidates:
+One thing that is not very clear to me is: what overall usage scheme should I aim for? I saw two
+candidates.
 
-\ls Get 1-qubit quantum state $\ket{\psi} = \alpha\ket{0} + \beta\ket{1}$ as input, encode it using
-    QECC into the superposition of logical states $\ket{\psi_L} = \alpha\ket{0_L} + \beta\ket{1_L}$.
-    Pass through a noisy quantum channel and decode back into the original $\ket{\psi}$.
+\ls Receive a 1-qubit quantum state $\ket{\psi} = \alpha\ket{0} + \beta\ket{1}$ as input. Encode it
+    using QECC into the superposition of logical states $\ket{\psi_L} = \alpha\ket{0_L} +
+    \beta\ket{1_L}$. Pass it through a noisy quantum channel and decode it back into the original
+    $\ket{\psi}$.
 \li Initialize the logical qubit with the logical zero state $\ket{0_L}$. Apply logical operations
-    such as $X_L$, $Z_L$ or others (TODO: which exactly?) to perform fault-tolerant
-    computations, e.g. obtain a desired $\ket{\psi_L}$. Measure it and interpret the results in an
+    such as $X_L$, $Z_L$, or others (TODO: specify which ones exactly) to perform fault-tolerant
+    computations, e.g., obtain a desired $\ket{\psi_L}$. Measure it and interpret the results in an
     algorithm-specific way.
 \le
 \end{QUESTION}
