@@ -21,8 +21,7 @@ tackle difficult, unseen problems.
 
 \ls \u{Low-distance Surface Codes under Realistic Quantum Noise}{https://arxiv.org/pdf/1404.3747}
     by Yu Tomita and Krysta M. Svore (2014). References:
-    \ls \t{[2]} \u{Quantum Error Correction}{https://arxiv.org/pdf/1910.03672}
-        by Todd A. Brunn
+    \ls \t{[2]} \tcite{Brune2020}
     \li \t{[6]} \u{Surface codes: Towards practical large-scale quantum computation}{https://arxiv.org/pdf/1208.0928}
         by Austin G. Fowler (2012)
     \le
@@ -35,19 +34,16 @@ tackle difficult, unseen problems.
 
 \section{Initial thoughts}
 
+In this section, we summarize our current understanding of the problem domain.
 
-\vsp
-\textbf{Quantum error correction codes}
-\vsp
+\subsubsection*{Quantum error correction codes}
 
 Quantum error correction codes (QECC) are techniques used to protect quantum information from errors
 due to decoherence, noise, and other quantum imperfections. They work by encoding logical quantum
 bits (qubits) into a larger number of physical qubits, allowing for the detection and correction of
 errors that can occur during quantum computation or storage.
 
-\vsp
-\textbf{Common error correction codes}
-\vsp
+\subsubsection*{Common error correction codes}
 
 \begin{enumerate}
   \item \textbf{Bit-flip code:} One of the simplest quantum error correction codes, the bit-flip
@@ -87,6 +83,62 @@ candidates.
 \le
 \end{QUESTION}
 
+\subsubsection*{Code space}
+
+\textit{Code space} refers to the subspace of a quantum Hilbert space in which the logical qubits
+are encoded.
+
+We assume that every practical QECC has a code space large enough to encode at least one qubit, that
+is, the $\Hilb{1}$.
+
+\vsp
+
+For example, the code space of the Stean code is spanned across the following vectors
+
+\[
+\ket{0_L} = \frac{1}{\sqrt{8}} \left( \ket{0000000} + \ket{1010101} + \ket{0110011} + \ket{1100110}
++ \ket{0001111} + \ket{1011010} + \ket{0111100} + \ket{1101001} \right)
+\]
+
+\vsp
+
+\[
+\ket{1_L} = \frac{1}{\sqrt{8}} \left( \ket{1111111} + \ket{0101010} + \ket{1001100} + \ket{0011001}
++ \ket{1110000} + \ket{0100101} + \ket{1000011} + \ket{0010110} \right)
+\]
+
+
+\subsubsection*{Stabilizer codes}
+
+The stabilizer formalism is a framework used in quantum error correction to describe quantum states
+and codes. It is based on the concept of stabilizer groups, which are sets of commuting operators
+from the Pauli group that stabilize (or leave unchanged) a particular subspace of a quantum system's
+Hilbert space, known as the code space.
+
+\vsp
+
+In the context of a quantum error-correcting code (QECC), stabilizer formalism describes logical
+states such as \(\ket{0_L}\) and \(\ket{1_L}\) of a QECC by specifying the stabilizers that leave
+these states unchanged.  These logical states are defined as the common +1 eigenstates of the
+stabilizer generators.
+
+\vsp
+
+The \textbf{Stabilizer Theorem} provides an important property that helps define valid stabilizer
+codes: A valid stabilizer code must have a stabilizer group composed of operators that do not
+include the negative identity operator \(-I\) as an element.
+
+\begin{itemize}
+  \item Every element of the stabilizer group must be a Hermitian operator with eigenvalues \( \pm 1
+\). The presence of \(-I\) would imply that the eigenvalue \(-1\) is always included, which
+conflicts with the requirement that the identity operator \(I\) (with eigenvalue \(+1\)) must be an
+element of the group.
+  \item The requirement to exclude \(-I\) ensures the stabilizer group forms a valid subgroup of the
+Pauli group, allowing the stabilizer code to properly define the code space and detect/correct
+errors without inherent contradictions.
+\end{itemize}
+
+
 
 \section{Implementation notes}
 
@@ -96,4 +148,5 @@ candidates.
     (\href{https://docs.pennylane.ai/en/stable/introduction/dynamic_quantum_circuits.html#conditional-operators}{link}).
 \le
 
+% \input{_discussions.tex}
 
