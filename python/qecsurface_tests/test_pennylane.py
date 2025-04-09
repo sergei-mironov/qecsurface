@@ -3,17 +3,17 @@ from qecsurface import *
 def test_to_pennylane_mcm():
   circuit_ft = FTHor(
     FTOps([
-      FTPrim(OpName.I, 0),  # Initialize qubit 0 if needed (placeholder)
-      FTCtrl(0, FTPrim(OpName.X, 1)),
+      FTPrim(OpName.I, [0]),  # Initialize qubit 0 if needed (placeholder)
+      FTCtrl(0, FTPrim(OpName.X, [1])),
       FTMeasure(0, "m0"),
       FTMeasure(1, "m1")
     ]),
     FTVert(
       FTOps([
-        FTCond(lambda m: 2*m["m0"]+m["m1"] == 2, FTPrim(OpName.X, 2))  # Conditional X on qubit 2
+        FTCond(lambda m: 2*m["m0"]+m["m1"] == 2, FTPrim(OpName.X, [2]))  # Conditional X on qubit 2
       ]),
       FTOps([
-        FTCond(lambda m: m["m1"] == 1, FTPrim(OpName.X, 2))  # Conditional Z on qubit 2
+        FTCond(lambda m: m["m1"] == 1, FTPrim(OpName.X, [2]))  # Conditional Z on qubit 2
       ])
     )
   )
@@ -101,7 +101,7 @@ def test_bitflip_full():
   syndrome = [3,4]
   i = FTOps([FTInit(0, 1/2, 1/2)])
   e = bitflip_encode(0, data)
-  err = FTOps([FTPrim(OpName.X, 2)])
+  err = FTOps([FTPrim(OpName.X, [2])])
   d = bitflip_detect(data, syndrome)
   c = bitflip_correct(data)
   cPL = to_pennylane_probs(reduce(FTHor,[i,e,err,d,c]), data)

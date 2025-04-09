@@ -11,11 +11,11 @@ def traverse_ftcircuit(circuit: FTCircuit[int], msms):
   def _traverse_op(op: FTOp[int]):
     if isinstance(op, FTPrim):
       if op.name == OpName.X:
-        qml.PauliX(wires=op.qubit)
+        qml.PauliX(wires=op.qubits)
       elif op.name == OpName.Z:
-        qml.PauliZ(wires=op.qubit)
+        qml.PauliZ(wires=op.qubits)
       elif op.name == OpName.H:
-        qml.Hadamard(wires=op.qubit)
+        qml.Hadamard(wires=op.qubits)
       elif op.name == OpName.I:
         pass
       else:
@@ -28,18 +28,18 @@ def traverse_ftcircuit(circuit: FTCircuit[int], msms):
       if not isinstance(op.op, FTPrim):
         raise ValueError(f"Unsupported nested op: {op.op}")
       if op.op.name == OpName.X:
-        qml.ctrl(qml.PauliX, control=op.control)(wires=op.op.qubit)
+        qml.ctrl(qml.PauliX, control=op.control)(wires=op.op.qubits)
       elif op.op.name == OpName.Z:
-        qml.ctrl(qml.PauliZ, control=op.control)(wires=op.op.qubit)
+        qml.ctrl(qml.PauliZ, control=op.control)(wires=op.op.qubits)
       else:
         raise ValueError(f"Unsupported nested op: {op.op}")
     elif isinstance(op, FTCond):
       if not isinstance(op.op, FTPrim):
         raise ValueError(f"Unsupported nested op: {op.op}")
       if op.op.name == OpName.X:
-        qml.cond(op.cond(msms),qml.PauliX)(wires=op.op.qubit)
+        qml.cond(op.cond(msms),qml.PauliX)(wires=op.op.qubits)
       elif op.op.name == OpName.Z:
-        qml.cond(op.cond(msms),qml.PauliZ)(wires=op.op.qubit)
+        qml.cond(op.cond(msms),qml.PauliZ)(wires=op.op.qubits)
       else:
         raise ValueError(f"Unsupported nested op: {op.op}")
     else:

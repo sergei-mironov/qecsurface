@@ -5,18 +5,18 @@ from .type import *
 def stabilizer_tile_X[Q](tile:Stabilizer[Q], syndrome:Q, ml:MeasureLabel) -> FTCircuit[Q]:
   assert tile.op == OpName.X, tile
   return FTOps([
-    FTPrim(OpName.H, syndrome),
-    *[FTCtrl(control=syndrome, op=FTPrim(OpName.X, qubit_label))
+    FTPrim(OpName.H, [syndrome]),
+    *[FTCtrl(control=syndrome, op=FTPrim(OpName.X, [qubit_label]))
       for qubit_label in tile.data
     ],
-    FTPrim(qubit=syndrome, name=OpName.H),
+    FTPrim(OpName.H, [syndrome]),
     FTMeasure(qubit=syndrome, label=ml)
   ])
 
 def stabilizer_tile_Z[Q](tile: Stabilizer[Q], syndrome: Q, ml: MeasureLabel) -> FTCircuit[Q]:
   assert tile.op == OpName.Z, tile
   return FTOps([
-    *[FTCtrl(control=qubit_label, op=FTPrim(OpName.X, syndrome))
+    *[FTCtrl(control=qubit_label, op=FTPrim(OpName.X, [syndrome]))
       for qubit_label in tile.data
     ],
     FTMeasure(qubit=syndrome, label=ml)
@@ -61,9 +61,8 @@ def surface25[Q](data: list[Q], syndrome: list[Q]) -> FTCircuit[Q]:
 
 def bitflip_encode[Q](src:Q, out:list[Q]) -> FTCircuit[Q]:
   assert src in out, "source qubit must be among the output ones"
-  # out.remove(src)
   d0, d1 = [q for q in out if q != src]
-  return FTOps([ FTCtrl(src, FTPrim(OpName.X, d0)), FTCtrl(src, FTPrim(OpName.X, d1)) ])
+  return FTOps([ FTCtrl(src, FTPrim(OpName.X, [d0])), FTCtrl(src, FTPrim(OpName.X, [d1])) ])
 
 
 def bitflip_detect[Q](data:list[Q], syndrome:list[Q]) -> FTCircuit[Q]:
@@ -75,12 +74,12 @@ def bitflip_detect[Q](data:list[Q], syndrome:list[Q]) -> FTCircuit[Q]:
 
 def bitflip_correct[Q](data:list[Q]) -> FTCircuit[Q]:
   d0, d1, d2 = [*data]
-  e0 = lambda msms:    msms['3'] & (~msms['4'])
-  e1 = lambda msms:    msms['3'] &    msms['4']
-  e2 = lambda msms: (~msms['3']) &    msms['4']
-  return FTOps([FTCond(e0,FTPrim(OpName.X, d0)),
-                FTCond(e1,FTPrim(OpName.X, d1)),
-                FTCond(e2,FTPrim(OpName.X, d2))])
+  e0 = lambda msms:    msms['3']  & (~msms['4'])
+  e1 = lambda msms:    msms['3']  &   msms['4']
+  e2 = lambda msms:  (~msms['3']) &   msms['4']
+  return FTOps([FTCond(e0,FTPrim(OpName.X, [d0])),
+                FTCond(e1,FTPrim(OpName.X, [d1])),
+                FTCond(e2,FTPrim(OpName.X, [d2]))])
 
 
 @dataclass

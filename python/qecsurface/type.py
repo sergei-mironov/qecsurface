@@ -29,7 +29,7 @@ class FTInit[Q]:
 class FTPrim[Q]:
   """ Primitive quantum operation acting on one qubit. """
   name:OpName
-  qubit:Q
+  qubits:list[Q]
 
 @dataclass
 class FTCtrl[Q]:
@@ -78,8 +78,10 @@ def labels[Q](c: FTCircuit[Q]) -> set[Q]:
   acc = set()
 
   def _traverse_op(op: FTOp[Q]) -> None:
-    if isinstance(op, (FTPrim, FTMeasure, FTInit)):
+    if isinstance(op, (FTMeasure, FTInit)):
       acc.add(op.qubit)
+    elif isinstance(op, FTPrim):
+      acc.update(op.qubits)
     elif isinstance(op, FTCtrl):
       acc.add(op.control)
       _traverse_op(op.op)
