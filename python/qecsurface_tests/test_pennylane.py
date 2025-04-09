@@ -1,3 +1,5 @@
+import pytest
+from numpy.testing import assert_allclose
 from qecsurface import *
 
 def test_to_pennylane_mcm():
@@ -96,14 +98,19 @@ def test_bitflip_correct():
   print(qml.draw(cPL)())
 
 
-def test_bitflip_full():
-  data = [0,1,2]
-  syndrome = [3,4]
-  i = FTOps([FTInit(0, 1/2, 1/2)])
-  e = bitflip_encode(0, data)
-  err = FTOps([FTPrim(OpName.X, [2])])
-  d = bitflip_detect(data, syndrome)
-  c = bitflip_correct(data)
-  cPL = to_pennylane_probs(reduce(FTHor,[i,e,err,d,c]), data)
+DATA_QUBITS = [0, 1, 2]
+@pytest.mark.parametrize("e", DATA_QUBITS)
+def test_bitflip_full(e):
+  data = DATA_QUBITS
+  syndrome = [3, 4]
+  cPL = to_pennylane_probs(reduce(FTHor, [
+    FTOps([FTInit(0, 1/2, 1/2)]),
+    bitflip_encode(0, data),
+    FTOps([FTPrim(OpName.X, [e])]),
+    bitflip_detect(data, syndrome),
+    bitflip_correct(data),
+  ]), data)
   print(qml.draw(cPL)())
-  print(cPL())
+  probs = cPL()
+  assert_allclose(probs, [0.5, 0.,  0.,  0.,  0.,  0.,  0.,  0.5])
+
