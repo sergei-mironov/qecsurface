@@ -34,7 +34,7 @@ from .qeccs import *
 
 def to_pennylane(c: FTCircuit[int]) -> None:
   nqubits = len(labels(c))
-  dev = qml.device("default.qubit", wires=nqubits, shots=3)
+  dev = qml.device("lightning.qubit", wires=nqubits, shots=3)
   msmts = {}
 
   @qml.qnode(dev, mcm_method="one-shot")
