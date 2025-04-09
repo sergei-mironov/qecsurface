@@ -52,6 +52,8 @@ def to_pennylane(c: FTCircuit[int]) -> None:
             pass
           else:
             raise ValueError(f"Unsupported primary operation: {op.name}")
+        elif isinstance(op, FTInit):
+          qml.StatePrep([op.alpha, op.beta], normalize=True, wires=[op.qubit])
         elif isinstance(op, FTMeasure):
           msmts[op.label] = qml.measure(op.qubit, reset=True)
         elif isinstance(op, FTCtrl):
@@ -84,8 +86,15 @@ def to_pennylane(c: FTCircuit[int]) -> None:
       else:
         raise ValueError(f"Unrecognized FTCircuit: {circuit}")
 
+    acc = []
     _traverse(c)
-    return qml.sample(tuple(msmts.values()))
+    acc.extend(qml.sample(qml.PauliZ(w)) for w in range(nqubits))
+    if len(msmts)>0:
+      acc.append(qml.sample(list(msmts.values())))
+    # _traverse(c)
+    # if len(msmts)>0:
+    #   acc.append(qml.sample(list(msmts.values())))
+    return acc
   return _circuit
 
 
@@ -99,7 +108,7 @@ def test_to_pennylane():
     ]),
     FTVert(
       FTOps([
-        FTCond(lambda m: m["m0"] == 1, FTPrim(OpName.X, 2))  # Conditional X on qubit 2
+        FTCond(lambda m: 2*m["m0"]+m["m1"] == 2, FTPrim(OpName.X, 2))  # Conditional X on qubit 2
       ]),
       FTOps([
         FTCond(lambda m: m["m1"] == 1, FTPrim(OpName.X, 2))  # Conditional Z on qubit 2
@@ -144,6 +153,44 @@ def test_surface25():
 def test_surface25_run():
   c = surface25([*range(13)], [*range(13,25)])
   cPL = to_pennylane(c)
+  print(qml.draw(cPL)())
+  print(cPL())
+
+def test_bitflip_detect():
+  c = bitflip_detect([*range(0,3)], [*range(3,5)])
+  cPL = to_pennylane(c)
+  print(qml.draw(cPL)())
+  # print(cPL())
+
+
+def test_bitflip_encode():
+  c = bitflip_encode(0, [0,1,2])
+  cPL = to_pennylane(c)
+  print(qml.draw(cPL)())
+
+
+def test_bitflip_encode_detect():
+  e = bitflip_encode(0, [0,1,2])
+  c = bitflip_detect([0,1,2],[3,4])
+  cPL = to_pennylane(FTVert(e,c))
+  print(qml.draw(cPL)())
+
+
+def test_bitflip_correct():
+  d = bitflip_detect([0,1,2],[3,4])
+  c = bitflip_correct([0,1,2])
+  cPL = to_pennylane(FTVert(d,c))
+  print(qml.draw(cPL)())
+
+def test_bitflip_full():
+  data = [0,1,2]
+  syndrome = [3,4]
+  i = FTOps([FTInit(0, 1/2, 1/2)])
+  e = bitflip_encode(0, data)
+  err = FTOps([FTPrim(OpName.X, 0)])
+  d = bitflip_detect(data, syndrome)
+  c = bitflip_correct(data)
+  cPL = to_pennylane(reduce(FTHor,[i,e,err,d,c]))
   print(qml.draw(cPL)())
   print(cPL())
 

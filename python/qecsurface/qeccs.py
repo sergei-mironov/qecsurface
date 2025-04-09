@@ -44,7 +44,6 @@ def surface9[Q](data:list[Q], syndrome:list[Q]) -> FTCircuit[Q]:
 
 
 def surface25[Q](data: list[Q], syndrome: list[Q]) -> FTCircuit[Q]:
-  """ Top-left corner of surface25 code, not really supposed to work. """
   assert len(data) == 13
   assert len(syndrome) == 12
   d0, d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12 = [*data]
@@ -59,8 +58,43 @@ def surface25[Q](data: list[Q], syndrome: list[Q]) -> FTCircuit[Q]:
   ]
   return reduce(FTVert, tiles)
 
+
+def bitflip_encode[Q](src:Q, out:list[Q]) -> FTCircuit[Q]:
+  assert src in out, "source qubit must be among the output ones"
+  # out.remove(src)
+  d0, d1 = [q for q in out if q != src]
+  return FTOps([ FTCtrl(src, FTPrim(OpName.X, d0)), FTCtrl(src, FTPrim(OpName.X, d1)) ])
+
+
+def bitflip_detect[Q](data:list[Q], syndrome:list[Q]) -> FTCircuit[Q]:
+  d0, d1, d2 = [*data]
+  s1, s2 = [*syndrome]
+  tiles = [ stabZ([d0, d1], s1), stabZ([d1, d2], s2) ]
+  return reduce(FTVert, tiles)
+
+
+def bitflip_correct[Q](data:list[Q]) -> FTCircuit[Q]:
+  d0, d1, d2 = [*data]
+  e0 = lambda msms:    msms['3'] & (~msms['4'])
+  e1 = lambda msms: (~msms['3']) &    msms['4']
+  e2 = lambda msms:    msms['3'] &    msms['4']
+  return FTOps([FTCond(e0,FTPrim(OpName.X, d0)),
+                FTCond(e1,FTPrim(OpName.X, d1)),
+                FTCond(e2,FTPrim(OpName.X, d2))])
+
+
 @dataclass
-class SurfaceQECC[Q1,Q2](QECC[Q1,Q2]):
+class Bitflip[Q1,Q2](QECC[Q1,Q2]):
+  """ FIXME: todo """
+  def detect(qubit:Q1) -> tuple[FTCircuit[Q2], list[MeasureLabel]]:
+    raise NotImplementedError
+  def correct(qubit:Q1, ms:dict[MeasureLabel,int]) -> FTCircuit[Q2]:
+    raise NotImplementedError
+
+
+@dataclass
+class Surface25[Q1,Q2](QECC[Q1,Q2]):
+  """ FIXME: todo """
   def detect(qubit:Q1) -> tuple[FTCircuit[Q2], list[MeasureLabel]]:
     raise NotImplementedError
   def correct(qubit:Q1, ms:dict[MeasureLabel,int]) -> FTCircuit[Q2]:

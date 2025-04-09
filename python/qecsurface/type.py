@@ -2,11 +2,8 @@ from typing import Generic, Union, Callable
 from dataclasses import dataclass
 from enum import Enum
 
-# class QuantumStateLabel(Enum):
-#   Zero = 0
-#   One = 1
-
 class OpName(Enum):
+  """ Quantum operation labels """
   I = 0
   X = 1
   Z = 2
@@ -14,30 +11,29 @@ class OpName(Enum):
 
 @dataclass
 class Stabilizer[Q]:
-  """ A stabilizer of a CSS quantum error correction code acting on labeled qubits
-  operations """
+  """ A CSS QECC stabilizer acting on the labeled qubits. """
   op: OpName
   data: list[Q]
 
-# def mkXS(data:list[QubitLabel], syndrome:QubitLabel) -> StabilizerTile[QubitLabel]:
-#   return StabilizerTile[QubitLabel](QuantumOpLabel.X, data, syndrome)
+# Common type alias for quantum operations
+type FTOp[Q] = Union["FTInit[Q]", "FTPrim[Q]", "FTCond[Q]", "FTCtrl[Q]", "FTMeasure[Q]"]
 
-# def mkZS(data:list[QubitLabel], syndrome:QubitLabel) -> StabilizerTile[QubitLabel]:
-#   return StabilizerTile[QubitLabel](QuantumOpLabel.Z, data, syndrome)
-
-
-##########################################
-
-# Quantum operations
-type FTOp[Q] = Union["FTPrim[Q]", "FTCond[Q]", "FTCtrl[Q]", "FTMeasure[Q]"]
+@dataclass
+class FTInit[Q]:
+  """ Primitive quantum operation acting on one qubit. """
+  qubit:Q
+  alpha:complex
+  beta:complex
 
 @dataclass
 class FTPrim[Q]:
+  """ Primitive quantum operation acting on one qubit. """
   name:OpName
   qubit:Q
 
 @dataclass
 class FTCtrl[Q]:
+  """ Quantum control operation acting on two qubits. """
   control:Q
   op:FTOp[Q]
 
@@ -45,6 +41,8 @@ type MeasureLabel = str
 
 @dataclass
 class FTMeasure[Q]:
+  """ Quantum measure oprtation which acts on a `qubit`. Measurement result is assiciated with a
+  `label`. """
   qubit:Q
   label:MeasureLabel
 
@@ -54,29 +52,33 @@ class FTCond[Q]:
   cond:Callable[[dict[MeasureLabel,int]],bool]
   op:FTOp[Q]
 
-# Quantum circuits
+# Common type alias for quantum circuits.
 type FTCircuit[Q] = Union["FTOps[Q]", "FTVert[Q]", "FTHor[Q]"]
 
 @dataclass
 class FTOps[Q]:
+  """ A primitive circuit consisting of a tape of operations. """
   ops:list[FTOp[Q]]
 
 @dataclass
 class FTVert[Q]:
+  """ Vertical composition of circuits, known as tensor product. """
   a: FTCircuit[Q]
   b: FTCircuit[Q]
 
 @dataclass
 class FTHor[Q]:
+  """ Vertical composition of circuits, known as tensor product.
+  FIXME: to be removed, since it seems equalt to FTVert. """
   a: FTCircuit[Q]
   b: FTCircuit[Q]
 
 def labels[Q](c: FTCircuit[Q]) -> set[Q]:
-  """ Collect all qubit labels of a circuit into a set."""
+  """ Collect all qubit labels from a circuit `c` into a set."""
   acc = set()
 
   def _traverse_op(op: FTOp[Q]) -> None:
-    if isinstance(op, (FTPrim, FTMeasure)):
+    if isinstance(op, (FTPrim, FTMeasure, FTInit)):
       acc.add(op.qubit)
     elif isinstance(op, FTCtrl):
       acc.add(op.control)
@@ -98,17 +100,6 @@ def labels[Q](c: FTCircuit[Q]) -> set[Q]:
 
   _traverse(c)
   return acc
-
-# \begin{itemize}
-#   \item \textbf{FTPrim}: I've replaced the operation types \verb|FTX|, \verb|FTZ|, etc., with
-# \verb|FTPrim|, assuming it is a new dataclass that takes \verb|OpName| as an argument to specify the
-# operation type.
-#   \item \textbf{OpName Matching}: The code now matches against the \verb|OpName| enumeration to
-# determine the operation type.
-# \end{itemize}
-
-# Ensure \verb|FTPrim| is properly defined in your set of classes to store instances of quantum
-# operations. Adjust the logic and assignments as needed to fit into your framework.
 
 
 @dataclass
