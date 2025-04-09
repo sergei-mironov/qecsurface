@@ -76,8 +76,8 @@ def bitflip_detect[Q](data:list[Q], syndrome:list[Q]) -> FTCircuit[Q]:
 def bitflip_correct[Q](data:list[Q]) -> FTCircuit[Q]:
   d0, d1, d2 = [*data]
   e0 = lambda msms:    msms['3'] & (~msms['4'])
-  e1 = lambda msms: (~msms['3']) &    msms['4']
-  e2 = lambda msms:    msms['3'] &    msms['4']
+  e1 = lambda msms:    msms['3'] &    msms['4']
+  e2 = lambda msms: (~msms['3']) &    msms['4']
   return FTOps([FTCond(e0,FTPrim(OpName.X, d0)),
                 FTCond(e1,FTPrim(OpName.X, d1)),
                 FTCond(e2,FTPrim(OpName.X, d2))])
