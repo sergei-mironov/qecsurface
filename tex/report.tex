@@ -27,9 +27,16 @@ tackle difficult, unseen problems.
     \le
 \li \u{Wiki about the Shor code}{https://en.wikipedia.org/wiki/Quantum_error_correction\#Shor_code}
 \li IQC 2024 Lecture 29 \u{Quantum Error Correction: Surface Codes}{https://opencourse.inf.ed.ac.uk/sites/default/files/https/opencourse.inf.ed.ac.uk/iqc/2024/iqclecture29_0.pdf}
+\li Coursera course Hands-on quantum error correction
+    \ls \href{https://journals.aps.org/prx/pdf/10.1103/PhysRevX.2.041003}{Topological Code Autotune}
+        by Austin G. Fowler (2012)
+    \le
+\li \href{https://arxiv.org/abs/2307.14989}{Decoding algorithms for surface codes} by lOlius (2024)
+    \ls \t{50} \href{https://arxiv.org/abs/2112.03708}{Realizing Repeated Quantum Error Correction in a Distance-Three Surface Code}
+    \li \t{51} \u{Suppressing quantum errors by scaling a surface code logical qubit}{https://arxiv.org/abs/2207.06431}
+    \le
 \li \tcite{Nielsen2010}
 \le
-
 
 
 \section{Initial thoughts}
@@ -139,11 +146,10 @@ errors without inherent contradictions.
 \end{itemize}
 
 
-
 \section{Implementation notes}
 
-\ls \href{https://discuss.pennylane.ai/t/how-to-reset-a-specific-qubit-to-0-during-computation/1871/17}{Unfortunately},
-    \st{it seems that Pennylane doest not have mid-circuit qubit resets yet}.  V 0.40.40 says
+\ls \st{\href{https://discuss.pennylane.ai/t/how-to-reset-a-specific-qubit-to-0-during-computation/1871/17}{Unfortunately},
+    it seems that Pennylane doest not have mid-circuit qubit resets yet}.  V 0.40.40 says
     \t{qml.measure} has a \t{reset=True} parameter
     (\href{https://docs.pennylane.ai/en/stable/introduction/dynamic_quantum_circuits.html#conditional-operators}{link}).
 \le
