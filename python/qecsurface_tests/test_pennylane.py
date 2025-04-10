@@ -140,13 +140,13 @@ def test_surface25u_correct(error_qubit, error_op):
   data = SURFACE25U_DATA_QUBITS
   syndrome = [13]
   layer0,layer1,layer2 = 0,1,2
-  c1,l1 = surface25u_detect(data, syndrome, layer0)         # (a)
-  err = FTOps([FTPrim(error_op,[error_qubit])])             # (b)
-  c2,l2 = surface25u_detect(data, syndrome, layer1)         # (c)
-  corr = surface25u_correct(data, layer0, layer1)           # (d)
-  c3,l3 = surface25u_detect(data, syndrome, layer2)         # (e)
+  c1,l1 = surface25u_detect(data, syndrome, layer0)          # (a)
+  err = FTOps([FTPrim(error_op,[error_qubit])])              # (b)
+  c2,l2 = surface25u_detect(data, syndrome, layer1)          # (c)
+  corr = surface25u_correct(data, layer0, layer1)            # (d)
+  c3,l3 = surface25u_detect(data, syndrome, layer2)          # (e)
   cPL = to_pennylane_mcm(reduce(FTComp,[c1,err,c2,corr,c3])) # (f)
-  msms = cPL()                                              # (g)
+  msms = cPL()                                               # (g)
   expected = surface25u_print2(msms, l1)
   assert all(e not in expected for e in "XZ"), f"Errors in the zero state:\n{expected}"
   synd = surface25u_print2(msms, l2)
