@@ -1,9 +1,10 @@
+""" The module defines QECC circuit parts. """
 from functools import reduce
 from textwrap import dedent
 from .type import *
 
 
-def stabilizer_tile_X[Q](tile:Stabilizer[Q], syndrome:Q, ml:MeasureLabel) -> FTCircuit[Q]:
+def stabilizer_tile_X[Q](tile:Stabilizer[Q], syndrome:Q, ml:MeasureLabel[Q]) -> FTCircuit[Q]:
   assert tile.op == OpName.X, tile
   return FTOps([
     FTPrim(OpName.H, [syndrome]),
@@ -14,7 +15,7 @@ def stabilizer_tile_X[Q](tile:Stabilizer[Q], syndrome:Q, ml:MeasureLabel) -> FTC
     FTMeasure(qubit=syndrome, label=ml)
   ])
 
-def stabilizer_tile_Z[Q](tile: Stabilizer[Q], syndrome: Q, ml: MeasureLabel) -> FTCircuit[Q]:
+def stabilizer_tile_Z[Q](tile:Stabilizer[Q], syndrome:Q, ml:MeasureLabel[Q]) -> FTCircuit[Q]:
   assert tile.op == OpName.Z, tile
   return FTOps([
     *[FTCtrl(control=qubit_label, op=FTPrim(OpName.X, [syndrome]))
@@ -29,17 +30,23 @@ def stabZ(data, syndrome):
   return stabilizer_tile_Z(Stabilizer(OpName.Z, data), syndrome, str(syndrome))
 
 
-def surface9[Q](data:list[Q], syndrome:list[Q]) -> FTCircuit[Q]:
+def surface9[Q](data:list[Q], syndrome:list[Q], layer:int=0) -> FTCircuit[Q]:
   """ Top-left corner of surface25 code, not really supposed to work. """
   assert len(data)==5
   assert len(syndrome)==4
+
+  def SX(data, syndrome):
+    return stabilizer_tile_X(Stabilizer(OpName.X, data), syndrome, (layer,OpName.X,tuple(data)))
+  def SZ(data, syndrome):
+    return stabilizer_tile_Z(Stabilizer(OpName.Z, data), syndrome, (layer,OpName.Z,tuple(data)))
+
   d0,d1,d3,d5,d6 = [*data]
   s13,s15,s16,s18 = [*syndrome]
   tiles = [
-    stabilizer_tile_X(Stabilizer(OpName.X, [d0,d1,d3]), s13, "s13"),
-    stabilizer_tile_Z(Stabilizer(OpName.Z, [d0,d3,d5]), s15, "s15"),
-    stabilizer_tile_Z(Stabilizer(OpName.Z, [d1,d3,d6]), s16, "s16"),
-    stabilizer_tile_X(Stabilizer(OpName.X, [d3,d5,d6]), s18, "s18"),
+    SX([d0,d1,d3], s13),
+    SZ([d0,d3,d5], s15),
+    SZ([d1,d3,d6], s16),
+    SX([d3,d5,d6], s18),
   ]
   return reduce(FTVert, tiles)
 
@@ -129,10 +136,10 @@ def surface25u_correct[Q](data:list[Q], layer0:int, layer:int) -> FTCircuit[Q]:
         ]
       )
     return FTCond(_cond, FTPrim(opc,[d]))
-  return reduce(FTHor, [
+  return FTHor(
     FTOps([_corrector(OpName.X, OpName.Z, d) for d in data]),
-    FTOps([_corrector(OpName.Z, OpName.X, d) for d in data]),
-  ])
+    FTOps([_corrector(OpName.Z, OpName.X, d) for d in data])
+  )
 
 def surface17u_detect[Q](
   data: list[Q], syndrome: list[Q], layer:int=0
@@ -180,19 +187,6 @@ def surface17u_print(msms:dict[MeasureLabel,int], flt:list[MeasureLabel]):
      o    o    o
        %s
   ''') % tuple((opname2str(l[1]) if msms[l] == 1 else ' ') for l in flt)
-
-
-# def surface17u_correct[Q](data:list[Q], labels0, labels) -> FTCircuit[Q]:
-#   d0, d1, d2, d3, d4, d5, d6, d7, d8  = [*data]
-#   s, = [*syndrome]
-#   def _corrector(d):
-#   # d0, d1, d2 = [*data]
-#   e0 = lambda msms:    msms['3']  & (~msms['4'])
-#   e1 = lambda msms:    msms['3']  &   msms['4']
-#   e2 = lambda msms:  (~msms['3']) &   msms['4']
-#   return FTOps([FTCond(e0,FTPrim(OpName.X, [d0])),
-#                 FTCond(e1,FTPrim(OpName.X, [d1])),
-#                 FTCond(e2,FTPrim(OpName.X, [d2]))])
 
 
 def surface20u_detect[Q](
@@ -253,18 +247,21 @@ def bitflip_encode[Q](src:Q, out:list[Q]) -> FTCircuit[Q]:
   return FTOps([ FTCtrl(src, FTPrim(OpName.X, [d0])), FTCtrl(src, FTPrim(OpName.X, [d1])) ])
 
 
-def bitflip_detect[Q](data:list[Q], syndrome:list[Q]) -> FTCircuit[Q]:
+def bitflip_detect[Q](data:list[Q], syndrome:list[Q], layer:int=0) -> FTCircuit[Q]:
   d0, d1, d2 = [*data]
   s1, s2 = [*syndrome]
-  tiles = [ stabZ([d0, d1], s1), stabZ([d1, d2], s2) ]
+  def SZ(data, syndrome):
+    return stabilizer_tile_Z(Stabilizer(OpName.Z, data), syndrome, (layer,OpName.Z,tuple(data)))
+  tiles = [ SZ([d0, d1], s1), SZ([d1, d2], s2) ]
   return reduce(FTVert, tiles)
 
 
-def bitflip_correct[Q](data:list[Q]) -> FTCircuit[Q]:
+def bitflip_correct[Q](data:list[Q], layer:int=0) -> FTCircuit[Q]:
   d0, d1, d2 = [*data]
-  e0 = lambda msms:    msms['3']  & (~msms['4'])
-  e1 = lambda msms:    msms['3']  &   msms['4']
-  e2 = lambda msms:  (~msms['3']) &   msms['4']
+  ee = lambda msms, d: msms[(layer,OpName.Z, d)]
+  e0 = lambda msms:    ee(msms,(d0,d1))  & (~ee(msms,(d1,d2)))
+  e1 = lambda msms:    ee(msms,(d0,d1))  &   ee(msms,(d1,d2))
+  e2 = lambda msms:  (~ee(msms,(d0,d1))) &   ee(msms,(d1,d2))
   return FTOps([FTCond(e0,FTPrim(OpName.X, [d0])),
                 FTCond(e1,FTPrim(OpName.X, [d1])),
                 FTCond(e2,FTPrim(OpName.X, [d2]))])

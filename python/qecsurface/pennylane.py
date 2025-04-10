@@ -7,7 +7,8 @@ from .type import *
 from .qeccs import *
 
 
-def traverse_ftcircuit(circuit: FTCircuit[int], msms):
+def traverse_ftcircuit(circuit: FTCircuit[int], msms) -> None:
+  """ Utility function for traversing FTCircuit. See `to_pennylane_*` functions below. """
   def _traverse_op(op: FTOp[int]):
     if isinstance(op, FTPrim):
       for q in op.qubits:
@@ -61,6 +62,8 @@ def traverse_ftcircuit(circuit: FTCircuit[int], msms):
 
 
 def to_pennylane_mcm(c: FTCircuit[int]):
+  """ Lower the FTCircuit to PennyLane. Return the PennyLane circuit returning mid-circuit
+  measurement samples as a dictionary. """
   nqubits = len(labels(c))
   dev = qml.device("lightning.qubit", wires=nqubits, shots=1)
   @qml.qnode(dev, mcm_method="one-shot")
@@ -73,6 +76,8 @@ def to_pennylane_mcm(c: FTCircuit[int]):
 
 
 def to_pennylane_probs(c: FTCircuit[int], data_qubits=None):
+  """ Lower the FTCircuit to PennyLane. Return the PennyLane circuit returning probabilities of data
+  basis vectors. """
   nqubits = len(labels(c))
   dev = qml.device("default.qubit", wires=nqubits)
   @qml.qnode(dev)

@@ -107,10 +107,7 @@ def test_surface25u_detect2():
   c2,l2 = surface25u_detect(data, syndrome, 1)
   cPL = to_pennylane_mcm(reduce(FTHor,[c1,c2]))
   print(qml.draw(cPL)())
-  # print(l2)
   msms = cPL()
-  # print(res)
-  # print(len(res[0]))
   print(surface25u_print(msms, l1))
   print(surface25u_print(msms, l2))
 
@@ -124,10 +121,17 @@ def test_surface25u_correct(error_qubit, error_op):
 
   The simplifications are as follows: (1) Syndrome qubits are considered to be perfect; (2)
   Therefore, Hadamard check circuits are applied to data qubits without a specific order; (3)
-  Further, to enhance simulation speed, all syndrome qubits are represented using a single qubit.
+  Further, to enhance simulation speed, all syndrome qubits are represented using a single qubit
+  which is re-used after each syndrome measurement.
 
   [1] - https://arxiv.org/pdf/1404.3747
   """
+  # Technical details:
+  #
+  # The desired quantum circuit is first defined in a minimalistic EDSL from the `qecsurface.type`
+  # module. Various subcuruit building routines are defined in `qecsurface.qeccs`.  The result is
+  # then lowered to PennyLane and simulated.
+  #
   # (a) - Initialize the logical-zero state; (b) - Introduce a data qubit error; (c) - Define an
   # error detection circuit; (d) - Apply corrections using a trivial decoding protocol; (e) - Define
   # the error detection for the second time; (f) - Stack the resulting circuits and convert them to

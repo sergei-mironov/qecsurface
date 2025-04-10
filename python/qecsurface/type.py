@@ -1,3 +1,7 @@
+""" A minimalistic domain-specific language for experimenting with fault-tolerant quantum computing.
+The DSL is designed with the idea of enabling nested error correction codes. Most of the types
+accept `Q` which is a type of qubit label, typically `int`.
+"""
 from typing import Generic, Union, Callable
 from dataclasses import dataclass
 from enum import Enum
@@ -40,19 +44,20 @@ class FTCtrl[Q]:
   control:Q
   op:FTOp[Q]
 
-type MeasureLabel = str
+# Syndrome test measurement label encodes a layer, the syndrome type and the qubit labels
+type MeasureLabel[Q] = tuple[int,OpName,tuple[Q,...]]
 
 @dataclass
 class FTMeasure[Q]:
   """ Quantum measure oprtation which acts on a `qubit`. Measurement result is assiciated with a
   `label`. """
   qubit:Q
-  label:MeasureLabel
+  label:MeasureLabel[Q]
 
 @dataclass
 class FTCond[Q]:
   """ A quantum operation applied if a classical condition is met. """
-  cond:Callable[[dict[MeasureLabel,int]],bool]
+  cond:Callable[[dict[MeasureLabel[Q],int]],bool]
   op:FTOp[Q]
 
 # Common type alias for quantum circuits.
@@ -110,7 +115,7 @@ def labels[Q](c: FTCircuit[Q]) -> set[Q]:
 @dataclass
 class QECC[Q1,Q2]:
   """ Base class for Quantum error correction codes. """
-  def detect(qubit:Q1) -> tuple[FTCircuit[Q2], list[MeasureLabel]]:
+  def detect(qubit:Q1) -> tuple[FTCircuit[Q2], list[MeasureLabel[Q2]]]:
     raise NotImplementedError
   def correct(qubit:Q1, ms:dict[MeasureLabel,int]) -> FTCircuit[Q2]:
     raise NotImplementedError
