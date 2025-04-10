@@ -119,8 +119,8 @@ SURFACE25U_DATA_QUBITS = list(range(13))
 @pytest.mark.parametrize("error_qubit", SURFACE25U_DATA_QUBITS)
 @pytest.mark.parametrize("error_op", [OpName.H,OpName.X,OpName.Z])
 def test_surface25u_correct(error_qubit, error_op):
-  """ Test a simplified Surface25 Quantum Error Correction Code[1] and runs one error correction
-  cycle by introducing a data error and applying corrections using a simple decoding algorithm.
+  """ Surface25 Quantum Error Correction Code[1] (with unified syndrome qubits) error correction
+  cycle.
 
   The simplifications are as follows: (1) Syndrome qubits are considered to be perfect; (2)
   Therefore, Hadamard check circuits are applied to data qubits without a specific order; (3)
@@ -128,19 +128,26 @@ def test_surface25u_correct(error_qubit, error_op):
 
   [1] - https://arxiv.org/pdf/1404.3747
   """
+  # (a) - Initializing the logical-zero state; (b) - Introducing a data qubit error; (c) - Run an
+  # error detection circuit; (d) - Apply corrections using a trivial protocol; (3) - Run the error
+  # detection for the second time; (f) - Convert the esulting circuit to PennyLane format and run
+  # obtain mid-circuit measurement samples.
   data = SURFACE25U_DATA_QUBITS
   syndrome = [13]
   layer0,layer1,layer2 = 0,1,2
-  c1,l1 = surface25u_detect(data, syndrome, layer0)
-  err =  FTOps([FTPrim(error_op,[error_qubit])])
-  c2,l2 = surface25u_detect(data, syndrome, layer1)
-  corr = surface25u_correct(data, layer0, layer1)
-  c3,l3 = surface25u_detect(data, syndrome, layer2)
-  cPL = to_pennylane_mcm(reduce(FTHor,[c1,err,c2,corr,c3]))
+  c1,l1 = surface25u_detect(data, syndrome, layer0)         # (a)
+  err =  FTOps([FTPrim(error_op,[error_qubit])])            # (b)
+  c2,l2 = surface25u_detect(data, syndrome, layer1)         # (c)
+  corr = surface25u_correct(data, layer0, layer1)           # (d)
+  c3,l3 = surface25u_detect(data, syndrome, layer2)         # (e)
+  cPL = to_pennylane_mcm(reduce(FTHor,[c1,err,c2,corr,c3])) # (f)
   msms = cPL()
   expected = surface25u_print2(msms, l1)
+  assert all(e not in expected for e in "XZ"), expected
+  synd = surface25u_print2(msms, l2)
   print("Error syndrome:")
-  print(surface25u_print2(msms, l2))
+  print(synd)
+  assert any(e in synd for e in "XZ"), synd
   actual = surface25u_print2(msms, l3)
   assert actual == expected, f"Correction failed:\n{actual}"
 
