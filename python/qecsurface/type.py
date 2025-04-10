@@ -16,12 +16,6 @@ class OpName(Enum):
 def opname2str(n:OpName)->str:
   return {OpName.I:'I', OpName.H:'H', OpName.Z:'Z', OpName.X:'X'}[n]
 
-@dataclass
-class Stabilizer[Q]:
-  """ A CSS QECC stabilizer acting on the labeled qubits. """
-  op: OpName
-  data: list[Q]
-
 # Common type alias for quantum operations
 type FTOp[Q] = Union["FTInit[Q]", "FTPrim[Q]", "FTCond[Q]", "FTCtrl[Q]", "FTMeasure[Q]"]
 

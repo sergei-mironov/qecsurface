@@ -4,30 +4,27 @@ from textwrap import dedent
 from .type import *
 
 
-def stabilizer_tile_X[Q](tile:Stabilizer[Q], syndrome:Q, ml:MeasureLabel[Q]) -> FTCircuit[Q]:
-  assert tile.op == OpName.X, tile
+def stabilizer_test_X[Q](tile:FTPrim[Q], syndrome:Q, ml:MeasureLabel[Q]) -> FTCircuit[Q]:
+  """ Define a stabilizer X-test circuit. """
+  assert tile.name == OpName.X, tile
   return FTOps([
     FTPrim(OpName.H, [syndrome]),
     *[FTCtrl(control=syndrome, op=FTPrim(OpName.X, [qubit_label]))
-      for qubit_label in tile.data
+      for qubit_label in tile.qubits
     ],
     FTPrim(OpName.H, [syndrome]),
     FTMeasure(qubit=syndrome, label=ml)
   ])
 
-def stabilizer_tile_Z[Q](tile:Stabilizer[Q], syndrome:Q, ml:MeasureLabel[Q]) -> FTCircuit[Q]:
-  assert tile.op == OpName.Z, tile
+def stabilizer_test_Z[Q](tile:FTPrim[Q], syndrome:Q, ml:MeasureLabel[Q]) -> FTCircuit[Q]:
+  """ Define a stabilizer Z-test circuit. """
+  assert tile.name == OpName.Z, tile
   return FTOps([
     *[FTCtrl(control=qubit_label, op=FTPrim(OpName.X, [syndrome]))
-      for qubit_label in tile.data
+      for qubit_label in tile.qubits
     ],
     FTMeasure(qubit=syndrome, label=ml)
   ])
-
-def stabX(data, syndrome):
-  return stabilizer_tile_X(Stabilizer(OpName.X, data), syndrome, str(syndrome))
-def stabZ(data, syndrome):
-  return stabilizer_tile_Z(Stabilizer(OpName.Z, data), syndrome, str(syndrome))
 
 
 def surface9[Q](data:list[Q], syndrome:list[Q], layer:int=0) -> FTCircuit[Q]:
@@ -36,9 +33,9 @@ def surface9[Q](data:list[Q], syndrome:list[Q], layer:int=0) -> FTCircuit[Q]:
   assert len(syndrome)==4
 
   def SX(data, syndrome):
-    return stabilizer_tile_X(Stabilizer(OpName.X, data), syndrome, (layer,OpName.X,tuple(data)))
+    return stabilizer_test_X(FTPrim(OpName.X, data), syndrome, (layer,OpName.X,tuple(data)))
   def SZ(data, syndrome):
-    return stabilizer_tile_Z(Stabilizer(OpName.Z, data), syndrome, (layer,OpName.Z,tuple(data)))
+    return stabilizer_test_Z(FTPrim(OpName.Z, data), syndrome, (layer,OpName.Z,tuple(data)))
 
   d0,d1,d3,d5,d6 = [*data]
   s13,s15,s16,s18 = [*syndrome]
@@ -57,12 +54,17 @@ def surface25[Q](data: list[Q], syndrome: list[Q]) -> FTCircuit[Q]:
   d0, d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12 = [*data]
   s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23, s24 = [*syndrome]
 
+  def SX(data, syndrome):
+    return stabilizer_test_X(FTPrim(OpName.X, data), syndrome, str(syndrome))
+  def SZ(data, syndrome):
+    return stabilizer_test_Z(FTPrim(OpName.Z, data), syndrome, str(syndrome))
+
   tiles = [
-              stabX([d0,d1,d3],s13), stabX([d1,d2,d4],s14),
-    stabZ([d0,d3,d5],s15), stabZ([d1,d3,d4,d6],s16), stabZ([d2,d4,d7],s17),
-           stabX([d3,d5,d6,d8],s18), stabX([d4,d6,d7,d9],s19),
-    stabZ([d5,d8,d10],s20), stabZ([d6,d8,d9,d11],s21), stabZ([d7,d9,d12],s22),
-              stabX([d8,d10,d11],s23), stabX([d9,d11,d12],s24),
+              SX([d0,d1,d3],s13), SX([d1,d2,d4],s14),
+    SZ([d0,d3,d5],s15), SZ([d1,d3,d4,d6],s16), SZ([d2,d4,d7],s17),
+           SX([d3,d5,d6,d8],s18), SX([d4,d6,d7,d9],s19),
+    SZ([d5,d8,d10],s20), SZ([d6,d8,d9,d11],s21), SZ([d7,d9,d12],s22),
+              SX([d8,d10,d11],s23), SX([d9,d11,d12],s24),
   ]
   return reduce(FTVert, tiles)
 
@@ -82,11 +84,11 @@ def surface25u_detect[Q](
   def SX(data, syndrome):
     label = (layer,OpName.X,tuple(data))
     labels.append(label)
-    return stabilizer_tile_X(Stabilizer(OpName.X, data), syndrome, label)
+    return stabilizer_test_X(FTPrim(OpName.X, data), syndrome, label)
   def SZ(data, syndrome):
     label = (layer,OpName.Z,tuple(data))
     labels.append(label)
-    return stabilizer_tile_Z(Stabilizer(OpName.Z, data), syndrome, label)
+    return stabilizer_test_Z(FTPrim(OpName.Z, data), syndrome, label)
 
   tiles = [
               SX([d0,d1,d3],s), SX([d1,d2,d4],s),
@@ -153,11 +155,11 @@ def surface17u_detect[Q](
   def SX(data, syndrome):
     label = (layer,OpName.X,tuple(data))
     labels.append(label)
-    return stabilizer_tile_X(Stabilizer(OpName.X, data), syndrome, label)
+    return stabilizer_test_X(FTPrim(OpName.X, data), syndrome, label)
   def SZ(data, syndrome):
     label = (layer,OpName.Z,tuple(data))
     labels.append(label)
-    return stabilizer_tile_Z(Stabilizer(OpName.Z, data), syndrome, label)
+    return stabilizer_test_Z(FTPrim(OpName.Z, data), syndrome, label)
 
   tiles = [
     #SX([d0,d8],s),
@@ -201,11 +203,11 @@ def surface20u_detect[Q](
   def SX(data, syndrome):
     label = (layer,OpName.X,tuple(data))
     labels.append(label)
-    return stabilizer_tile_X(Stabilizer(OpName.X, data), syndrome, label)
+    return stabilizer_test_X(FTPrim(OpName.X, data), syndrome, label)
   def SZ(data, syndrome):
     label = (layer,OpName.Z,tuple(data))
     labels.append(label)
-    return stabilizer_tile_Z(Stabilizer(OpName.Z, data), syndrome, label)
+    return stabilizer_test_Z(FTPrim(OpName.Z, data), syndrome, label)
 
   tiles = [
     #SX([d0,d8],s),
@@ -251,7 +253,7 @@ def bitflip_detect[Q](data:list[Q], syndrome:list[Q], layer:int=0) -> FTCircuit[
   d0, d1, d2 = [*data]
   s1, s2 = [*syndrome]
   def SZ(data, syndrome):
-    return stabilizer_tile_Z(Stabilizer(OpName.Z, data), syndrome, (layer,OpName.Z,tuple(data)))
+    return stabilizer_test_Z(FTPrim(OpName.Z, data), syndrome, (layer,OpName.Z,tuple(data)))
   tiles = [ SZ([d0, d1], s1), SZ([d1, d2], s2) ]
   return reduce(FTVert, tiles)
 

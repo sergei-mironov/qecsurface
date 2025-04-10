@@ -28,15 +28,15 @@ def test_to_pennylane_mcm():
 
 
 def test_tile_X_to_pennylane_mcm():
-  s = Stabilizer(OpName.X, [0, 1, 2, 3])
-  c = stabilizer_tile_X(s, 4, "m")
+  s = FTPrim(OpName.X, [0, 1, 2, 3])
+  c = stabilizer_test_X(s, 4, "m")
   cPL = to_pennylane_mcm(c)
   print(qml.draw(cPL)())
 
 
 def test_tile_Z_to_pennylane_mcm():
-  s = Stabilizer(OpName.Z, [0, 1, 2, 3])
-  c = stabilizer_tile_Z(s, 4, "m")
+  s = FTPrim(OpName.Z, [0, 1, 2, 3])
+  c = stabilizer_test_Z(s, 4, "m")
   cPL = to_pennylane_mcm(c)
   print(qml.draw(cPL)())
 
