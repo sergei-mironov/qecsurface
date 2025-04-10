@@ -80,6 +80,23 @@ def test_surface17u_detect2():
   print(surface17u_print(msms, l2))
 
 
+def test_surface17u_detect3():
+  init = FTOps([FTPrim(OpName.H,[0,1,2,3,4,5,6,7,8])])
+  c1,l1 = surface17u_detect([0,1,2,3,4,5,6,7,8], [9], 0)
+  c2,l2 = surface17u_detect([0,1,2,3,4,5,6,7,8], [9], 1)
+  err =  FTOps([FTPrim(OpName.Z,[4])])
+  c3,l3 = surface17u_detect([0,1,2,3,4,5,6,7,8], [9], 2)
+  cPL = to_pennylane_mcm(reduce(FTHor,[init,c1,c2,err,c3]))
+  # print(qml.draw(cPL)())
+  # print(l2)
+  msms = cPL()
+  # print(res)
+  # print(len(res[0]))
+  print(surface17u_print(msms, l1))
+  print(surface17u_print(msms, l2))
+  print(surface17u_print(msms, l3))
+
+
 def test_surface20u_detect2():
   c1,l1 = surface20u_detect([0,1,2,3,4,5,6,7,8], [9], 0)
   c2,l2 = surface20u_detect([0,1,2,3,4,5,6,7,8], [9], 1)
