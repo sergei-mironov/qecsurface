@@ -129,9 +129,9 @@ def test_surface25u_correct(error_qubit, error_op):
   [1] - https://arxiv.org/pdf/1404.3747
   """
   # (a) - Initializing the logical-zero state; (b) - Introducing a data qubit error; (c) - Run an
-  # error detection circuit; (d) - Apply corrections using a trivial decoding protocol; (3) - Run
+  # error detection circuit; (d) - Apply corrections using a trivial decoding protocol; (e) - Run
   # the error detection for the second time; (f) - Convert the resulting circuit to the PennyLane
-  # format and obtain the mid-circuit measurement samples.
+  # format and (g) - Obtain the mid-circuitmeasurement samples (msms) by running the simulation.
   data = SURFACE25U_DATA_QUBITS
   syndrome = [13]
   layer0,layer1,layer2 = 0,1,2
@@ -141,7 +141,7 @@ def test_surface25u_correct(error_qubit, error_op):
   corr = surface25u_correct(data, layer0, layer1)           # (d)
   c3,l3 = surface25u_detect(data, syndrome, layer2)         # (e)
   cPL = to_pennylane_mcm(reduce(FTHor,[c1,err,c2,corr,c3])) # (f)
-  msms = cPL()
+  msms = cPL()                                              # (g)
   expected = surface25u_print2(msms, l1)
   assert all(e not in expected for e in "XZ"), f"Errors in the zero state:\n{expected}"
   synd = surface25u_print2(msms, l2)
