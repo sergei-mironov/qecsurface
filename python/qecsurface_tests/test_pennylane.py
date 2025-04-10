@@ -64,7 +64,7 @@ def test_surface20u_detect1():
   print(surface20u_print(msms,l))
 
 def test_surface17u_print():
-  msms = {(0,'T',l):1 for l in range(8)}
+  msms = {(0,OpName.X,l):1 for l in range(8)}
   print(surface17u_print(msms, list(msms.keys())))
 
 def test_surface17u_detect2():
@@ -147,7 +147,7 @@ def test_surface25u_correct(error_qubit, error_op):
 
 
 def test_surface20u_print():
-  msms = {(0,'T',l):1 for l in range(12)}
+  msms = {(0,OpName.X,l):1 for l in range(12)}
   print(surface20u_print(msms, list(msms.keys())))
 
 def test_surface25():
@@ -180,7 +180,7 @@ def test_bitflip_init():
 
 def test_bitflip_encode():
   c = bitflip_encode(0, [0,1,2])
-  cPL = to_pennylane_mcm(c)
+  cPL = to_pennylane_probs(c)
   print(qml.draw(cPL)())
 
 
