@@ -54,7 +54,7 @@ class FTCond[Q]:
   cond:Callable[[dict[MeasureLabel[Q],int]],bool]
   op:FTOp[Q]
 
-# Common type alias for quantum circuits.
+# Common type alias for quantum circuits, where Q is type of qubit label.
 type FTCircuit[Q] = Union["FTOps[Q]", "FTComp[Q]"]
 
 @dataclass
@@ -64,7 +64,7 @@ class FTOps[Q]:
 
 @dataclass
 class FTComp[Q]:
-  """ Vertical composition of circuits, known as tensor product. """
+  """ Vertical composition of circuits, also known as circuit tensor product. """
   a: FTCircuit[Q]
   b: FTCircuit[Q]
 
