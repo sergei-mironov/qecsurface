@@ -9,17 +9,17 @@ from qecsurface.qeccs import (
 def test_to_pennylane_mcm():
   circuit_ft = FTHor(
     FTOps([
-      FTPrim(OpName.I, [0]),  # Initialize qubit 0 if needed (placeholder)
+      FTPrim(OpName.I, [0]),
       FTCtrl(0, FTPrim(OpName.X, [1])),
       FTMeasure(0, "m0"),
       FTMeasure(1, "m1")
     ]),
     FTVert(
       FTOps([
-        FTCond(lambda m: 2*m["m0"]+m["m1"] == 2, FTPrim(OpName.X, [2]))  # Conditional X on qubit 2
+        FTCond(lambda m: 2*m["m0"]+m["m1"] == 2, FTPrim(OpName.X, [2]))
       ]),
       FTOps([
-        FTCond(lambda m: m["m1"] == 1, FTPrim(OpName.X, [2]))  # Conditional Z on qubit 2
+        FTCond(lambda m: m["m1"] == 1, FTPrim(OpName.X, [2]))
       ])
     )
   )
@@ -60,7 +60,6 @@ def test_surface20u_detect1():
   print(l)
   msms = cPL()
   print(msms)
-  # print(len(res[0]))
   print(surface20u_print(msms,l))
 
 def test_surface17u_print():
@@ -73,10 +72,7 @@ def test_surface17u_detect2():
   c2,l2 = surface17u_detect([0,1,2,3,4,5,6,7,8], [9], 1)
   cPL = to_pennylane_mcm(reduce(FTHor,[init,c1,c2]))
   print(qml.draw(cPL)())
-  # print(l2)
   msms = cPL()
-  # print(res)
-  # print(len(res[0]))
   print(surface17u_print(msms, l1))
   print(surface17u_print(msms, l2))
 
@@ -88,11 +84,7 @@ def test_surface17u_detect3():
   err =  FTOps([FTPrim(OpName.Z,[4])])
   c3,l3 = surface17u_detect([0,1,2,3,4,5,6,7,8], [9], 2)
   cPL = to_pennylane_mcm(reduce(FTHor,[init,c1,c2,err,c3]))
-  # print(qml.draw(cPL)())
-  # print(l2)
   msms = cPL()
-  # print(res)
-  # print(len(res[0]))
   print(surface17u_print(msms, l1))
   print(surface17u_print(msms, l2))
   print(surface17u_print(msms, l3))
@@ -103,10 +95,7 @@ def test_surface20u_detect2():
   c2,l2 = surface20u_detect([0,1,2,3,4,5,6,7,8], [9], 1)
   cPL = to_pennylane_mcm(reduce(FTHor,[c1,c2]))
   print(qml.draw(cPL)())
-  # print(l2)
   msms = cPL()
-  # print(res)
-  # print(len(res[0]))
   print(surface20u_print(msms, l1))
   print(surface20u_print(msms, l2))
 
@@ -130,17 +119,27 @@ SURFACE25U_DATA_QUBITS = list(range(13))
 @pytest.mark.parametrize("error_qubit", SURFACE25U_DATA_QUBITS)
 @pytest.mark.parametrize("error_op", [OpName.H,OpName.X,OpName.Z])
 def test_surface25u_correct(error_qubit, error_op):
+  """ Test a simplified Surface25 Quantum Error Correction Code[1] and runs one error correction
+  cycle by introducing a data error and applying corrections using a simple decoding algorithm.
+
+  The simplifications are as follows: (1) Syndrome qubits are considered to be perfect; (2)
+  Therefore, Hadamard check circuits are applied to data qubits without a specific order; (3)
+  Further, to enhance simulation speed, all syndrome qubits are represented using a single qubit.
+
+  [1] - https://arxiv.org/pdf/1404.3747
+  """
   data = SURFACE25U_DATA_QUBITS
   syndrome = [13]
-  c1,l1 = surface25u_detect(data, syndrome, 0)
+  layer0,layer1,layer2 = 0,1,2
+  c1,l1 = surface25u_detect(data, syndrome, layer0)
   err =  FTOps([FTPrim(error_op,[error_qubit])])
-  c2,l2 = surface25u_detect(data, syndrome, 1)
-  corr = surface25u_correct(data, 0, 1)
-  c3,l3 = surface25u_detect(data, syndrome, 2)
+  c2,l2 = surface25u_detect(data, syndrome, layer1)
+  corr = surface25u_correct(data, layer0, layer1)
+  c3,l3 = surface25u_detect(data, syndrome, layer2)
   cPL = to_pennylane_mcm(reduce(FTHor,[c1,err,c2,corr,c3]))
   msms = cPL()
-  print(surface25u_print(msms, l1))
   expected = surface25u_print2(msms, l1)
+  print("Error syndrome:")
   print(surface25u_print2(msms, l2))
   actual = surface25u_print2(msms, l3)
   assert actual == expected, f"Correction failed:\n{actual}"
@@ -154,14 +153,6 @@ def test_surface25():
   c = surface25([*range(13)], [*range(13,25)])
   cPL = to_pennylane_mcm(c)
   print(qml.draw(cPL)())
-
-
-# def test_surface25_run():
-#   c = surface25([*range(13)], [*range(13,25)])
-#   cPL = to_pennylane_mcm(c)
-#   print(qml.draw(cPL)())
-#   print(cPL())
-
 
 def test_bitflip_detect():
   c = bitflip_detect([*range(0,3)], [*range(3,5)])

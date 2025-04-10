@@ -114,7 +114,6 @@ def surface25u_correct[Q](data:list[Q], layer0:int, layer:int) -> FTCircuit[Q]:
     def _cond(msms):
       neigb = [l[2] for l in list(msms.keys()) if l[0]==layer and l[1]==op and (d in l[2])]
       others = [l[2] for l in list(msms.keys()) if l[0]==layer and l[1]==op and (d not in l[2])]
-      print(f"{d} -> {neigb}")
       return reduce(
         lambda a,b: a & b, [
           *[(msms[(layer0,op,n)] != msms[(layer,op,n)]) for n in neigb],
