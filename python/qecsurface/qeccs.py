@@ -61,9 +61,12 @@ def surface25[Q](data: list[Q], syndrome: list[Q]) -> FTCircuit[Q]:
 
 
 def surface25u_detect[Q](
-  data: list[Q], syndrome: list[Q], layer:int=0) -> tuple[FTCircuit[Q],list[MeasureLabel]]:
-  assert len(data) == 13
-  assert len(syndrome) == 1
+  data: list[Q], syndrome: list[Q], layer:int=0
+) -> tuple[FTCircuit[Q],list[MeasureLabel]]:
+  """ Build the surface25u error detection circuit. Return the circuit alongside with a list of
+  mid-circuit measurement labels. """
+  assert len(data) == 13, f"Expected 13 data qubit labels, got {data}"
+  assert len(syndrome) == 1, f"Expected 1 syndrome qubit label, got {syndrome}"
 
   d0, d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12 = [*data]
   s, = [*syndrome]
@@ -89,6 +92,7 @@ def surface25u_detect[Q](
 
 
 def surface25u_print(msms:dict[MeasureLabel,int], flt:list[MeasureLabel]):
+  """ Visualize the surface25 syndromes. """
   return dedent('''
     o ? o ? o
     ? o ? o ?
@@ -99,6 +103,8 @@ def surface25u_print(msms:dict[MeasureLabel,int], flt:list[MeasureLabel]):
 
 
 def surface25u_print2(msms:dict[MeasureLabel,int], flt:list[MeasureLabel]):
+  """ Visualize the surface25 syndromes. Highlight only those syndromes that mismatch the layer-0
+  syndromes. """
   return dedent('''
     o ? o ? o
     ? o ? o ?
@@ -110,6 +116,8 @@ def surface25u_print2(msms:dict[MeasureLabel,int], flt:list[MeasureLabel]):
   )
 
 def surface25u_correct[Q](data:list[Q], layer0:int, layer:int) -> FTCircuit[Q]:
+  """ Build the surface25u error correction circuit assuming `layer` measurememnts are available.
+  Use `layer0` measurements as a reference. """
   def _corrector(op, opc, d):
     def _cond(msms):
       neigb = [l[2] for l in list(msms.keys()) if l[0]==layer and l[1]==op and (d in l[2])]
