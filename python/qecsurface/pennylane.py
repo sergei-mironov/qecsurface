@@ -53,7 +53,7 @@ def traverse_ftcircuit(circuit: FTCircuit[int], msms) -> None:
     if isinstance(circuit, FTOps):
       for op in circuit.ops:
         _traverse_op(op)
-    elif isinstance(circuit, (FTHor, FTVert)):
+    elif isinstance(circuit, (FTComp,)):
       _traverse(circuit.a)
       _traverse(circuit.b)
     else:

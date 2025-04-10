@@ -45,7 +45,7 @@ def surface9[Q](data:list[Q], syndrome:list[Q], layer:int=0) -> FTCircuit[Q]:
     SZ([d1,d3,d6], s16),
     SX([d3,d5,d6], s18),
   ]
-  return reduce(FTVert, tiles)
+  return reduce(FTComp, tiles)
 
 
 def surface25[Q](data: list[Q], syndrome: list[Q]) -> FTCircuit[Q]:
@@ -66,7 +66,7 @@ def surface25[Q](data: list[Q], syndrome: list[Q]) -> FTCircuit[Q]:
     SZ([d5,d8,d10],s20), SZ([d6,d8,d9,d11],s21), SZ([d7,d9,d12],s22),
               SX([d8,d10,d11],s23), SX([d9,d11,d12],s24),
   ]
-  return reduce(FTVert, tiles)
+  return reduce(FTComp, tiles)
 
 
 def surface25u_detect[Q](
@@ -97,7 +97,7 @@ def surface25u_detect[Q](
     SZ([d5,d8,d10],s), SZ([d6,d8,d9,d11],s), SZ([d7,d9,d12],s),
               SX([d8,d10,d11],s), SX([d9,d11,d12],s),
   ]
-  return reduce(FTVert, tiles), labels
+  return reduce(FTComp, tiles), labels
 
 
 def surface25u_print(msms:dict[MeasureLabel,int], flt:list[MeasureLabel]):
@@ -138,7 +138,7 @@ def surface25u_correct[Q](data:list[Q], layer0:int, layer:int) -> FTCircuit[Q]:
         ]
       )
     return FTCond(_cond, FTPrim(opc,[d]))
-  return FTHor(
+  return FTComp(
     FTOps([_corrector(OpName.X, OpName.Z, d) for d in data]),
     FTOps([_corrector(OpName.Z, OpName.X, d) for d in data])
   )
@@ -176,7 +176,7 @@ def surface17u_detect[Q](
     SX([d6,d7],s),
     #SZ([d7,d8],s),
   ]
-  return reduce(FTVert, tiles), labels
+  return reduce(FTComp, tiles), labels
 
 
 def surface17u_print(msms:dict[MeasureLabel,int], flt:list[MeasureLabel]):
@@ -224,7 +224,7 @@ def surface20u_detect[Q](
     SX([d6,d7],s),
     SZ([d7,d8],s),
   ]
-  return reduce(FTVert, tiles), labels
+  return reduce(FTComp, tiles), labels
 
 
 def surface20u_print(msms:dict[MeasureLabel,int], flt:list[MeasureLabel]):
@@ -240,7 +240,7 @@ def surface20u_print(msms:dict[MeasureLabel,int], flt:list[MeasureLabel]):
 
 
 # def surface17B_correct[Q](data: list[Q], syndrome: list[Q], labels:set[str]) -> FTCircuit[Q]:
-#   return reduce(FTVert, tiles)
+#   return reduce(FTComp, tiles)
 
 
 def bitflip_encode[Q](src:Q, out:list[Q]) -> FTCircuit[Q]:
@@ -255,7 +255,7 @@ def bitflip_detect[Q](data:list[Q], syndrome:list[Q], layer:int=0) -> FTCircuit[
   def SZ(data, syndrome):
     return stabilizer_test_Z(FTPrim(OpName.Z, data), syndrome, (layer,OpName.Z,tuple(data)))
   tiles = [ SZ([d0, d1], s1), SZ([d1, d2], s2) ]
-  return reduce(FTVert, tiles)
+  return reduce(FTComp, tiles)
 
 
 def bitflip_correct[Q](data:list[Q], layer:int=0) -> FTCircuit[Q]:

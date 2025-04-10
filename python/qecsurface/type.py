@@ -55,7 +55,7 @@ class FTCond[Q]:
   op:FTOp[Q]
 
 # Common type alias for quantum circuits.
-type FTCircuit[Q] = Union["FTOps[Q]", "FTVert[Q]", "FTHor[Q]"]
+type FTCircuit[Q] = Union["FTOps[Q]", "FTComp[Q]"]
 
 @dataclass
 class FTOps[Q]:
@@ -63,15 +63,8 @@ class FTOps[Q]:
   ops:list[FTOp[Q]]
 
 @dataclass
-class FTVert[Q]:
+class FTComp[Q]:
   """ Vertical composition of circuits, known as tensor product. """
-  a: FTCircuit[Q]
-  b: FTCircuit[Q]
-
-@dataclass
-class FTHor[Q]:
-  """ Vertical composition of circuits, known as tensor product.
-  FIXME: to be removed, since it seems equalt to FTVert. """
   a: FTCircuit[Q]
   b: FTCircuit[Q]
 
@@ -96,7 +89,7 @@ def labels[Q](c: FTCircuit[Q]) -> set[Q]:
     if isinstance(circuit, FTOps):
       for op in circuit.ops:
         _traverse_op(op)
-    elif isinstance(circuit, (FTHor, FTVert)):
+    elif isinstance(circuit, FTComp):
       _traverse(circuit.a)
       _traverse(circuit.b)
     else:
