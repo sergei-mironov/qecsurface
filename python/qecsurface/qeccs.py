@@ -1,4 +1,5 @@
 from functools import reduce
+from textwrap import dedent
 from .type import *
 
 
@@ -57,6 +58,106 @@ def surface25[Q](data: list[Q], syndrome: list[Q]) -> FTCircuit[Q]:
               stabX([d8,d10,d11],s23), stabX([d9,d11,d12],s24),
   ]
   return reduce(FTVert, tiles)
+
+
+def surface17u_detect[Q](
+  data: list[Q], syndrome: list[Q], layer:int=0
+) -> tuple[FTCircuit[Q], list[MeasureLabel]]:
+  assert len(data) == 9
+  assert len(syndrome) == 1
+  d0, d1, d2, d3, d4, d5, d6, d7, d8  = [*data]
+  s, = [*syndrome]
+  labels = []
+
+  def SX(data, syndrome):
+    label = (layer,'X',tuple(data))
+    labels.append(label)
+    return stabilizer_tile_X(Stabilizer(OpName.X, data), syndrome, label)
+  def SZ(data, syndrome):
+    label = (layer,'Z',tuple(data))
+    labels.append(label)
+    return stabilizer_tile_Z(Stabilizer(OpName.Z, data), syndrome, label)
+
+  tiles = [
+    #SX([d0,d8],s),
+    #SZ([d0,d1],s),
+    SX([d1,d2],s),
+    #SZ([d2,d6],s),
+
+    SZ([d0,d3],s),
+    SX([d0,d1,d3,d4],s), SZ([d1,d2,d4,d5],s),
+    #SX([d2,d5],s),
+    #SX([d3,d6],s),
+    SZ([d3,d4,d6,d7],s), SX([d4,d5,d8,d7],s),
+    SZ([d5,d8],s),
+    SX([d6,d7],s),
+    #SZ([d7,d8],s),
+  ]
+  return reduce(FTVert, tiles), labels
+
+
+def surface17u_print(msms:dict[MeasureLabel,int], flt:list[MeasureLabel]):
+  return dedent('''
+            %s
+     o    o    o
+  %s    %s    %s
+     o    o    o
+       %s    %s    %s
+     o    o    o
+       %s
+  ''') % tuple((l[1] if msms[l] == 1 else ' ') for l in flt)
+
+
+def surface20u_detect[Q](
+  data: list[Q], syndrome: list[Q], layer:int=0
+) -> tuple[FTCircuit[Q], list[MeasureLabel]]:
+  assert len(data) == 9
+  assert len(syndrome) == 1
+  d0, d1, d2, d3, d4, d5, d6, d7, d8  = [*data]
+  s, = [*syndrome]
+  labels = []
+
+  def SX(data, syndrome):
+    label = (layer,'X',tuple(data))
+    labels.append(label)
+    return stabilizer_tile_X(Stabilizer(OpName.X, data), syndrome, label)
+  def SZ(data, syndrome):
+    label = (layer,'Z',tuple(data))
+    labels.append(label)
+    return stabilizer_tile_Z(Stabilizer(OpName.Z, data), syndrome, label)
+
+  tiles = [
+    #SX([d0,d8],s),
+    SZ([d0,d1],s),
+    SX([d1,d2],s),
+    #SZ([d2,d6],s),
+
+    SZ([d0,d3],s),
+    SX([d0,d1,d3,d4],s), SZ([d1,d2,d4,d5],s),
+    SX([d2,d5],s),
+    SX([d3,d6],s),
+    SZ([d3,d4,d6,d7],s), SX([d4,d5,d8,d7],s),
+    SZ([d5,d8],s),
+    SX([d6,d7],s),
+    SZ([d7,d8],s),
+  ]
+  return reduce(FTVert, tiles), labels
+
+
+def surface20u_print(msms:dict[MeasureLabel,int], flt:list[MeasureLabel]):
+  return dedent('''
+       %s    %s
+     o    o    o
+  %s    %s    %s    %s
+     o    o    o
+  %s    %s    %s    %s
+     o    o    o
+        %s   %s
+  ''') % tuple((l[1] if msms[l] == 1 else ' ') for l in flt)
+
+
+# def surface17B_correct[Q](data: list[Q], syndrome: list[Q], labels:set[str]) -> FTCircuit[Q]:
+#   return reduce(FTVert, tiles)
 
 
 def bitflip_encode[Q](src:Q, out:list[Q]) -> FTCircuit[Q]:

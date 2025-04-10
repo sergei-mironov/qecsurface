@@ -81,7 +81,7 @@ def labels[Q](c: FTCircuit[Q]) -> set[Q]:
     if isinstance(op, (FTMeasure, FTInit)):
       acc.add(op.qubit)
     elif isinstance(op, FTPrim):
-      acc.update(op.qubits)
+      acc.update(set(op.qubits))
     elif isinstance(op, FTCtrl):
       acc.add(op.control)
       _traverse_op(op.op)

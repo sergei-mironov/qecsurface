@@ -1,6 +1,9 @@
 import pytest
 from numpy.testing import assert_allclose
 from qecsurface import *
+from qecsurface.qeccs import (
+  surface20u_detect, surface20u_print, surface17u_detect, surface17u_print
+)
 
 def test_to_pennylane_mcm():
   circuit_ft = FTHor(
@@ -49,6 +52,50 @@ def test_surface9_run():
   print(qml.draw(cPL)())
   print(cPL())
 
+def test_surface20u_detect1():
+  c,l = surface20u_detect([0,1,2,3,4,5,6,7,8], [9], 0)
+  cPL = to_pennylane_mcm(c)
+  print(qml.draw(cPL)())
+  print(l)
+  msms = cPL()
+  print(msms)
+  # print(len(res[0]))
+  print(surface20u_print(msms,l))
+
+def test_surface17u_print():
+  msms = {(0,'T',l):1 for l in range(8)}
+  print(surface17u_print(msms, list(msms.keys())))
+
+def test_surface17u_detect2():
+  init = FTOps([FTPrim(OpName.H,[0,1,2,3,4,5,6,7,8])])
+  c1,l1 = surface17u_detect([0,1,2,3,4,5,6,7,8], [9], 0)
+  c2,l2 = surface17u_detect([0,1,2,3,4,5,6,7,8], [9], 1)
+  cPL = to_pennylane_mcm(reduce(FTHor,[init,c1,c2]))
+  print(qml.draw(cPL)())
+  # print(l2)
+  msms = cPL()
+  # print(res)
+  # print(len(res[0]))
+  print(surface17u_print(msms, l1))
+  print(surface17u_print(msms, l2))
+
+
+def test_surface20u_detect2():
+  c1,l1 = surface20u_detect([0,1,2,3,4,5,6,7,8], [9], 0)
+  c2,l2 = surface20u_detect([0,1,2,3,4,5,6,7,8], [9], 1)
+  cPL = to_pennylane_mcm(reduce(FTHor,[c1,c2]))
+  print(qml.draw(cPL)())
+  # print(l2)
+  msms = cPL()
+  # print(res)
+  # print(len(res[0]))
+  print(surface20u_print(msms, l1))
+  print(surface20u_print(msms, l2))
+
+
+def test_surface20u_print():
+  msms = {(0,'T',l):1 for l in range(12)}
+  print(surface20u_print(msms, list(msms.keys())))
 
 def test_surface25():
   c = surface25([*range(13)], [*range(13,25)])
