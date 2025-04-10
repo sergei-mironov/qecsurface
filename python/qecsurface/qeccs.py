@@ -60,6 +60,73 @@ def surface25[Q](data: list[Q], syndrome: list[Q]) -> FTCircuit[Q]:
   return reduce(FTVert, tiles)
 
 
+def surface25u_detect[Q](
+  data: list[Q], syndrome: list[Q], layer:int=0) -> tuple[FTCircuit[Q],list[MeasureLabel]]:
+  assert len(data) == 13
+  assert len(syndrome) == 1
+
+  d0, d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12 = [*data]
+  s, = [*syndrome]
+  labels = []
+
+  def SX(data, syndrome):
+    label = (layer,OpName.X,tuple(data))
+    labels.append(label)
+    return stabilizer_tile_X(Stabilizer(OpName.X, data), syndrome, label)
+  def SZ(data, syndrome):
+    label = (layer,OpName.Z,tuple(data))
+    labels.append(label)
+    return stabilizer_tile_Z(Stabilizer(OpName.Z, data), syndrome, label)
+
+  tiles = [
+              SX([d0,d1,d3],s), SX([d1,d2,d4],s),
+    SZ([d0,d3,d5],s), SZ([d1,d3,d4,d6],s), SZ([d2,d4,d7],s),
+           SX([d3,d5,d6,d8],s), SX([d4,d6,d7,d9],s),
+    SZ([d5,d8,d10],s), SZ([d6,d8,d9,d11],s), SZ([d7,d9,d12],s),
+              SX([d8,d10,d11],s), SX([d9,d11,d12],s),
+  ]
+  return reduce(FTVert, tiles), labels
+
+
+def surface25u_print(msms:dict[MeasureLabel,int], flt:list[MeasureLabel]):
+  return dedent('''
+    o ? o ? o
+    ? o ? o ?
+    o ? o ? o
+    ? o ? o ?
+    o ? o ? o
+  ''').replace('?','%s') % tuple((opname2str(l[1]) if msms[l] == 1 else ' ') for l in flt)
+
+
+def surface25u_print2(msms:dict[MeasureLabel,int], flt:list[MeasureLabel]):
+  return dedent('''
+    o ? o ? o
+    ? o ? o ?
+    o ? o ? o
+    ? o ? o ?
+    o ? o ? o
+  ''').replace('?','%s') % tuple(
+    (opname2str(l[1]) if msms[l] != msms[(0,*l[1:])] else ' ') for l in flt
+  )
+
+def surface25u_correct[Q](data:list[Q], layer0:int, layer:int) -> FTCircuit[Q]:
+  def _corrector(op, opc, d):
+    def _cond(msms):
+      neigb = [l[2] for l in list(msms.keys()) if l[0]==layer and l[1]==op and (d in l[2])]
+      others = [l[2] for l in list(msms.keys()) if l[0]==layer and l[1]==op and (d not in l[2])]
+      print(f"{d} -> {neigb}")
+      return reduce(
+        lambda a,b: a & b, [
+          *[(msms[(layer0,op,n)] != msms[(layer,op,n)]) for n in neigb],
+          *[(msms[(layer0,op,n)] == msms[(layer,op,n)]) for n in others],
+        ]
+      )
+    return FTCond(_cond, FTPrim(opc,[d]))
+  return reduce(FTHor, [
+    FTOps([_corrector(OpName.X, OpName.Z, d) for d in data]),
+    FTOps([_corrector(OpName.Z, OpName.X, d) for d in data]),
+  ])
+
 def surface17u_detect[Q](
   data: list[Q], syndrome: list[Q], layer:int=0
 ) -> tuple[FTCircuit[Q], list[MeasureLabel]]:
@@ -70,11 +137,11 @@ def surface17u_detect[Q](
   labels = []
 
   def SX(data, syndrome):
-    label = (layer,'X',tuple(data))
+    label = (layer,OpName.X,tuple(data))
     labels.append(label)
     return stabilizer_tile_X(Stabilizer(OpName.X, data), syndrome, label)
   def SZ(data, syndrome):
-    label = (layer,'Z',tuple(data))
+    label = (layer,OpName.Z,tuple(data))
     labels.append(label)
     return stabilizer_tile_Z(Stabilizer(OpName.Z, data), syndrome, label)
 
@@ -105,7 +172,20 @@ def surface17u_print(msms:dict[MeasureLabel,int], flt:list[MeasureLabel]):
        %s    %s    %s
      o    o    o
        %s
-  ''') % tuple((l[1] if msms[l] == 1 else ' ') for l in flt)
+  ''') % tuple((opname2str(l[1]) if msms[l] == 1 else ' ') for l in flt)
+
+
+# def surface17u_correct[Q](data:list[Q], labels0, labels) -> FTCircuit[Q]:
+#   d0, d1, d2, d3, d4, d5, d6, d7, d8  = [*data]
+#   s, = [*syndrome]
+#   def _corrector(d):
+#   # d0, d1, d2 = [*data]
+#   e0 = lambda msms:    msms['3']  & (~msms['4'])
+#   e1 = lambda msms:    msms['3']  &   msms['4']
+#   e2 = lambda msms:  (~msms['3']) &   msms['4']
+#   return FTOps([FTCond(e0,FTPrim(OpName.X, [d0])),
+#                 FTCond(e1,FTPrim(OpName.X, [d1])),
+#                 FTCond(e2,FTPrim(OpName.X, [d2]))])
 
 
 def surface20u_detect[Q](
@@ -118,11 +198,11 @@ def surface20u_detect[Q](
   labels = []
 
   def SX(data, syndrome):
-    label = (layer,'X',tuple(data))
+    label = (layer,OpName.X,tuple(data))
     labels.append(label)
     return stabilizer_tile_X(Stabilizer(OpName.X, data), syndrome, label)
   def SZ(data, syndrome):
-    label = (layer,'Z',tuple(data))
+    label = (layer,OpName.Z,tuple(data))
     labels.append(label)
     return stabilizer_tile_Z(Stabilizer(OpName.Z, data), syndrome, label)
 
@@ -153,7 +233,7 @@ def surface20u_print(msms:dict[MeasureLabel,int], flt:list[MeasureLabel]):
   %s    %s    %s    %s
      o    o    o
         %s   %s
-  ''') % tuple((l[1] if msms[l] == 1 else ' ') for l in flt)
+  ''') % tuple((opname2str(l[1]) if msms[l] == 1 else ' ') for l in flt)
 
 
 # def surface17B_correct[Q](data: list[Q], syndrome: list[Q], labels:set[str]) -> FTCircuit[Q]:

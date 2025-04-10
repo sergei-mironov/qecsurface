@@ -2,7 +2,8 @@ import pytest
 from numpy.testing import assert_allclose
 from qecsurface import *
 from qecsurface.qeccs import (
-  surface20u_detect, surface20u_print, surface17u_detect, surface17u_print
+  surface20u_detect, surface20u_print, surface17u_detect, surface17u_print,
+  surface25u_detect, surface25u_print2, surface25u_print, surface25u_correct
 )
 
 def test_to_pennylane_mcm():
@@ -110,6 +111,41 @@ def test_surface20u_detect2():
   print(surface20u_print(msms, l2))
 
 
+def test_surface25u_detect2():
+  data = list(range(13))
+  syndrome = [13]
+  c1,l1 = surface25u_detect(data, syndrome, 0)
+  c2,l2 = surface25u_detect(data, syndrome, 1)
+  cPL = to_pennylane_mcm(reduce(FTHor,[c1,c2]))
+  print(qml.draw(cPL)())
+  # print(l2)
+  msms = cPL()
+  # print(res)
+  # print(len(res[0]))
+  print(surface25u_print(msms, l1))
+  print(surface25u_print(msms, l2))
+
+
+SURFACE25U_DATA_QUBITS = list(range(13))
+@pytest.mark.parametrize("error_qubit", SURFACE25U_DATA_QUBITS)
+@pytest.mark.parametrize("error_op", [OpName.H,OpName.X,OpName.Z])
+def test_surface25u_correct(error_qubit, error_op):
+  data = SURFACE25U_DATA_QUBITS
+  syndrome = [13]
+  c1,l1 = surface25u_detect(data, syndrome, 0)
+  err =  FTOps([FTPrim(error_op,[error_qubit])])
+  c2,l2 = surface25u_detect(data, syndrome, 1)
+  corr = surface25u_correct(data, 0, 1)
+  c3,l3 = surface25u_detect(data, syndrome, 2)
+  cPL = to_pennylane_mcm(reduce(FTHor,[c1,err,c2,corr,c3]))
+  msms = cPL()
+  print(surface25u_print(msms, l1))
+  expected = surface25u_print2(msms, l1)
+  print(surface25u_print2(msms, l2))
+  actual = surface25u_print2(msms, l3)
+  assert actual == expected, f"Correction failed:\n{actual}"
+
+
 def test_surface20u_print():
   msms = {(0,'T',l):1 for l in range(12)}
   print(surface20u_print(msms, list(msms.keys())))
@@ -162,10 +198,10 @@ def test_bitflip_correct():
   print(qml.draw(cPL)())
 
 
-DATA_QUBITS = [0, 1, 2]
-@pytest.mark.parametrize("e", DATA_QUBITS)
+BITFLIP_DATA_QUBITS = [0, 1, 2]
+@pytest.mark.parametrize("e", BITFLIP_DATA_QUBITS)
 def test_bitflip_full(e):
-  data = DATA_QUBITS
+  data = BITFLIP_DATA_QUBITS
   syndrome = [3, 4]
   cPL = to_pennylane_probs(reduce(FTHor, [
     FTOps([FTInit(0, 1/2, 1/2)]),

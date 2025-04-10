@@ -9,6 +9,9 @@ class OpName(Enum):
   Z = 2
   H = 3
 
+def opname2str(n:OpName)->str:
+  return {OpName.I:'I', OpName.H:'H', OpName.Z:'Z', OpName.X:'X'}[n]
+
 @dataclass
 class Stabilizer[Q]:
   """ A CSS QECC stabilizer acting on the labeled qubits. """
