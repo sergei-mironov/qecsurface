@@ -7,9 +7,11 @@ from .type import *
 from .qeccs import *
 
 
-def traverse_ftcircuit(circuit: FTCircuit[int], msms) -> None:
-  """ Utility function for traversing FTCircuit. See `to_pennylane_*` functions below. """
-  def _traverse_op(op: FTOp[int]):
+# Implementing to_pennylane using traverse_circuit
+def traverse_ftcircuit[Q](circuit: FTCircuit[Q], msms:dict) -> None:
+  """ Translate FTCircuit into PennyLane operations. """
+
+  def _traverse_op(op: FTOp[Q], msms:dict) -> None:
     if isinstance(op, FTPrim):
       for q in op.qubits:
         if op.name == OpName.X:
@@ -49,16 +51,7 @@ def traverse_ftcircuit(circuit: FTCircuit[int], msms) -> None:
     else:
       raise ValueError(f"Unrecognized FTOp: {op}")
 
-  def _traverse(circuit: FTCircuit[int]):
-    if isinstance(circuit, FTOps):
-      for op in circuit.ops:
-        _traverse_op(op)
-    elif isinstance(circuit, (FTComp,)):
-      _traverse(circuit.a)
-      _traverse(circuit.b)
-    else:
-      raise ValueError(f"Unrecognized FTCircuit: {circuit}")
-  _traverse(circuit)
+  traverse_circuit(circuit, _traverse_op, msms)
 
 
 def to_pennylane_mcm(c: FTCircuit[int]):
