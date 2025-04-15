@@ -68,44 +68,7 @@ class FTComp[Q]:
   a: FTCircuit[Q]
   b: FTCircuit[Q]
 
-def labels1[Q](c: FTCircuit[Q]) -> set[Q]:
-  """ Collect all qubit labels from a circuit `c` into a set."""
-  acc = set()
 
-  def _traverse_op(op: FTOp[Q]) -> None:
-    if isinstance(op, (FTMeasure, FTInit)):
-      acc.add(op.qubit)
-    elif isinstance(op, FTPrim):
-      acc.update(set(op.qubits))
-    elif isinstance(op, FTCtrl):
-      acc.add(op.control)
-      _traverse_op(op.op)
-    elif isinstance(op, FTCond):
-      _traverse_op(op.op)
-    else:
-      raise ValueError(f"Unknown operation type: {op}")
-
-  def _traverse(circuit: FTCircuit[Q]) -> None:
-    if isinstance(circuit, FTOps):
-      for op in circuit.ops:
-        _traverse_op(op)
-    elif isinstance(circuit, FTComp):
-      _traverse(circuit.a)
-      _traverse(circuit.b)
-    else:
-      raise ValueError(f"Unknown circuit type: {circuit}")
-
-  _traverse(c)
-  return acc
-
-
-@dataclass
-class QECC[Q1,Q2]:
-  """ Base class for Quantum error correction codes. """
-  def detect(qubit:Q1) -> tuple[FTCircuit[Q2], list[MeasureLabel[Q2]]]:
-    raise NotImplementedError
-  def correct(qubit:Q1, ms:dict[MeasureLabel,int]) -> FTCircuit[Q2]:
-    raise NotImplementedError
 
 def traverse_circuit[Q](
   circuit: FTCircuit[Q],
@@ -150,4 +113,13 @@ def labels[Q](c: FTCircuit[Q]) -> set[Q]:
   acc = set()
   traverse_circuit(c, _traverse_op, acc)
   return acc
+
+
+@dataclass
+class QECC[Q1,Q2]:
+  """ Base class for Quantum error correction codes. """
+  def detect(qubit:Q1) -> tuple[FTCircuit[Q2], list[MeasureLabel[Q2]]]:
+    raise NotImplementedError
+  def correct(qubit:Q1, ms:dict[MeasureLabel,int]) -> FTCircuit[Q2]:
+    raise NotImplementedError
 
