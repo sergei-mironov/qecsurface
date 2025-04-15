@@ -260,22 +260,55 @@ def bitflip_detect[Q](data:list[Q], syndrome:list[Q], layer:int=0) -> FTCircuit[
 
 def bitflip_correct[Q](data:list[Q], layer:int=0) -> FTCircuit[Q]:
   d0, d1, d2 = [*data]
-  ee = lambda msms, d: msms[(layer,OpName.Z, d)]
+  ee = lambda msms, d: msms[(layer, OpName.Z, d)]
   e0 = lambda msms:    ee(msms,(d0,d1))  & (~ee(msms,(d1,d2)))
   e1 = lambda msms:    ee(msms,(d0,d1))  &   ee(msms,(d1,d2))
   e2 = lambda msms:  (~ee(msms,(d0,d1))) &   ee(msms,(d1,d2))
-  return FTOps([FTCond(e0,FTPrim(OpName.X, [d0])),
-                FTCond(e1,FTPrim(OpName.X, [d1])),
-                FTCond(e2,FTPrim(OpName.X, [d2]))])
+  return FTOps([FTCond(e0, FTPrim(OpName.X, [d0])),
+                FTCond(e1, FTPrim(OpName.X, [d1])),
+                FTCond(e2, FTPrim(OpName.X, [d2]))])
 
 
-# @dataclass
-# class Bitflip[Q1,Q2](QECC[Q1,Q2]):
-#   """ FIXME: todo """
-#   def detect(qubit:Q1) -> tuple[FTCircuit[Q2], list[MeasureLabel]]:
-#     raise NotImplementedError
-#   def correct(qubit:Q1, ms:dict[MeasureLabel,int]) -> FTCircuit[Q2]:
-#     raise NotImplementedError
+@dataclass
+class Bitflip[Q1,Q2](Map[Q1,Q2]):
+  qmap:dict[Q1,tuple[list[Q2],list[Q2]]]
+  layer:int = 0
+
+  def _next_layer(self) -> int:
+    l = self.layer
+    self.layer = self.layer + 1
+    return l
+
+  def _correction_cycle(self, q:Q1) -> FTCircuit[Q2]:
+    qubits, syndromes = self.qmap[q]
+    layer = self._next_layer()
+    det = bitflip_detect(qubits, syndromes, layer)
+    corr = bitflip_correct(qubits, layer)
+    return FTComp(det,corr)
+
+  def map_op(self, op:FTOp[Q1]) -> FTCircuit[Q2]:
+    qmap = self.qmap
+    acc = []
+    if isinstance(op, FTInit):
+      if (op.alpha, op.beta) != (1.0, 0.0):
+        raise ValueError(f"Bitflip only supports zero initializations, got {op}")
+      acc.append(bitlip_encode(qmap[op.qubit][0][0], qmap[op.qubit][0]))
+      acc.append(self._correction_cycle(op.qubit))
+    elif isinstance(op, FTPrim):
+      for q in op.qubits:
+        qubits = qmap[q][0]
+        if op.name == OpName.X:
+          acc.append(FTOps([FTPrim(OpName.X, qubits)]))
+          acc.append(self._correction_cycle(q))
+        elif op.name == OpName.Z:
+          acc.append(FTOps([FTPrim(OpName.Z, qubits)]))
+          acc.append(self._correction_cycle(q))
+        else:
+          raise ValueError(f"Bitflip qecc: Unsupported primitive operation: {op}")
+    else:
+      raise ValueError(f"Bitflip qecc: Unsupported operation: {op}")
+    return reduce(FTComp, acc)
+
 
 
 # @dataclass

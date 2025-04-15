@@ -64,7 +64,7 @@ class FTOps[Q]:
 
 @dataclass
 class FTComp[Q]:
-  """ Vertical composition of circuits, also known as circuit tensor product. """
+  """ Composition of circuits, also known as circuit tensor product. """
   a: FTCircuit[Q]
   b: FTCircuit[Q]
 
@@ -116,26 +116,17 @@ def labels[Q](c:FTCircuit[Q]) -> set[Q]:
   return acc
 
 
-# @dataclass
-# class Map[Q1,Q2]:
-#   """ Base class for Quantum error correction codes. """
-#   def map_op(op:FTOp[Q1]) -> FTCircuit[Q2]:
-#     raise NotImplementedError
-#   # def init(qubit:Q1) -> tuple[FTCircuit[Q2]]:
-#   #   raise NotImplementedError
-#   # def detect(qubit:Q1) -> tuple[FTCircuit[Q2], list[MeasureLabel[Q2]]]:
-#   #   raise NotImplementedError
-#   # def correct(qubit:Q1, ms:dict[MeasureLabel,int]) -> FTCircuit[Q2]:
-#   #   raise NotImplementedError
+@dataclass
+class Map[Q1,Q2]:
+  """ Base class for Quantum error correction codes. """
+  def map_op(self, op:FTOp[Q1]) -> FTCircuit[Q2]:
+    raise NotImplementedError
 
 
-# def lower[Q1,Q2](c:FTCircuit[Q1], m:Map[Q1,Q2]) -> FTCircuit[Q2]:
-
-#   def _traverse_op(op:FTOp[Q1], acc) -> None:
-#     m.map_op(op)
-#   acc = []
-#   traverse_circuit(c, _traverse_op, acc)
-#   pass
+def map_circuit[Q1,Q2](c:FTCircuit[Q1], m:Map[Q1,Q2]) -> FTCircuit[Q2]:
+  def _traverse_op(op:FTOp[Q1], acc) -> None:
+    return FTComp(acc, m.map_op(op))
+  return traverse_circuit(c, _traverse_op, FTOps([]))
 
 
 
