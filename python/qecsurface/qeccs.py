@@ -269,22 +269,22 @@ def bitflip_correct[Q](data:list[Q], layer:int=0) -> FTCircuit[Q]:
                 FTCond(e2,FTPrim(OpName.X, [d2]))])
 
 
-@dataclass
-class Bitflip[Q1,Q2](QECC[Q1,Q2]):
-  """ FIXME: todo """
-  def detect(qubit:Q1) -> tuple[FTCircuit[Q2], list[MeasureLabel]]:
-    raise NotImplementedError
-  def correct(qubit:Q1, ms:dict[MeasureLabel,int]) -> FTCircuit[Q2]:
-    raise NotImplementedError
+# @dataclass
+# class Bitflip[Q1,Q2](QECC[Q1,Q2]):
+#   """ FIXME: todo """
+#   def detect(qubit:Q1) -> tuple[FTCircuit[Q2], list[MeasureLabel]]:
+#     raise NotImplementedError
+#   def correct(qubit:Q1, ms:dict[MeasureLabel,int]) -> FTCircuit[Q2]:
+#     raise NotImplementedError
 
 
-@dataclass
-class Surface25[Q1,Q2](QECC[Q1,Q2]):
-  """ FIXME: todo """
-  def detect(qubit:Q1) -> tuple[FTCircuit[Q2], list[MeasureLabel]]:
-    raise NotImplementedError
-  def correct(qubit:Q1, ms:dict[MeasureLabel,int]) -> FTCircuit[Q2]:
-    raise NotImplementedError
+# @dataclass
+# class Surface25[Q1,Q2](QECC[Q1,Q2]):
+#   """ FIXME: todo """
+#   def detect(qubit:Q1) -> tuple[FTCircuit[Q2], list[MeasureLabel]]:
+#     raise NotImplementedError
+#   def correct(qubit:Q1, ms:dict[MeasureLabel,int]) -> FTCircuit[Q2]:
+#     raise NotImplementedError
 
 
 

@@ -10,7 +10,7 @@ from .qeccs import *
 def traverse_ftcircuit[Q](circuit: FTCircuit[Q], msms:dict) -> None:
   """ Translate FTCircuit into PennyLane operations. """
 
-  def _traverse_op(op: FTOp[Q], msms:dict) -> None:
+  def _traverse_op(op: FTOp[Q], msms:dict) -> dict:
     if isinstance(op, FTPrim):
       for q in op.qubits:
         if op.name == OpName.X:
@@ -49,6 +49,7 @@ def traverse_ftcircuit[Q](circuit: FTCircuit[Q], msms:dict) -> None:
           raise ValueError(f"Unsupported nested op: {op.op}")
     else:
       raise ValueError(f"Unrecognized FTOp: {op}")
+    return msms
 
   traverse_circuit(circuit, _traverse_op, msms)
 

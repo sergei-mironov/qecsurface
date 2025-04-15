@@ -69,34 +69,34 @@ class FTComp[Q]:
   b: FTCircuit[Q]
 
 
-
-def traverse_circuit[Q](
-  circuit: FTCircuit[Q],
-  op_handler: Callable[[FTOp[Q], Union[dict, set]], None],
-  acc: Union[dict, set]
+def traverse_circuit[Q,A](
+  circuit:FTCircuit[Q],
+  op_handler:Callable[[FTOp[Q],A],A],
+  acc:A
 ) -> None:
   """ Generalized function for traversing FTCircuit and performing an operation using a handler.
   """
-  def _traverse_op(op: FTOp[Q]) -> None:
-    op_handler(op, acc)
+  def _traverse_op(op:FTOp[Q], acc:A) -> A:
+    return op_handler(op, acc)
 
-  def _traverse(circuit: FTCircuit[Q]) -> None:
+  def _traverse(circuit:FTCircuit[Q], acc) -> A:
     if isinstance(circuit, FTOps):
       for op in circuit.ops:
-        _traverse_op(op)
+        acc = _traverse_op(op, acc)
     elif isinstance(circuit, FTComp):
-      _traverse(circuit.a)
-      _traverse(circuit.b)
+      acc = _traverse(circuit.a, acc)
+      acc = _traverse(circuit.b, acc)
     else:
       raise ValueError(f"Unrecognized FTCircuit: {circuit}")
+    return acc
 
-  _traverse(circuit)
+  return _traverse(circuit, acc)
 
 
-def labels[Q](c: FTCircuit[Q]) -> set[Q]:
+def labels[Q](c:FTCircuit[Q]) -> set[Q]:
   """ Collect all qubit labels from a circuit `c` into a set. """
 
-  def _traverse_op(op: FTOp[Q], acc: set[Q]) -> None:
+  def _traverse_op(op:FTOp[Q], acc:set[Q]) -> None:
     # Handler for different operation types
     if isinstance(op, (FTMeasure, FTInit)):
       acc.add(op.qubit)
@@ -104,22 +104,39 @@ def labels[Q](c: FTCircuit[Q]) -> set[Q]:
       acc.update(set(op.qubits))
     elif isinstance(op, FTCtrl):
       acc.add(op.control)
-      _traverse_op(op.op, acc)
+      acc = _traverse_op(op.op, acc)
     elif isinstance(op, FTCond):
-      _traverse_op(op.op, acc)
+      acc = _traverse_op(op.op, acc)
     else:
       raise ValueError(f"Unrecognized FTOp: {op}")
+    return acc
 
   acc = set()
   traverse_circuit(c, _traverse_op, acc)
   return acc
 
 
-@dataclass
-class QECC[Q1,Q2]:
-  """ Base class for Quantum error correction codes. """
-  def detect(qubit:Q1) -> tuple[FTCircuit[Q2], list[MeasureLabel[Q2]]]:
-    raise NotImplementedError
-  def correct(qubit:Q1, ms:dict[MeasureLabel,int]) -> FTCircuit[Q2]:
-    raise NotImplementedError
+# @dataclass
+# class Map[Q1,Q2]:
+#   """ Base class for Quantum error correction codes. """
+#   def map_op(op:FTOp[Q1]) -> FTCircuit[Q2]:
+#     raise NotImplementedError
+#   # def init(qubit:Q1) -> tuple[FTCircuit[Q2]]:
+#   #   raise NotImplementedError
+#   # def detect(qubit:Q1) -> tuple[FTCircuit[Q2], list[MeasureLabel[Q2]]]:
+#   #   raise NotImplementedError
+#   # def correct(qubit:Q1, ms:dict[MeasureLabel,int]) -> FTCircuit[Q2]:
+#   #   raise NotImplementedError
+
+
+# def lower[Q1,Q2](c:FTCircuit[Q1], m:Map[Q1,Q2]) -> FTCircuit[Q2]:
+
+#   def _traverse_op(op:FTOp[Q1], acc) -> None:
+#     m.map_op(op)
+#   acc = []
+#   traverse_circuit(c, _traverse_op, acc)
+#   pass
+
+
+
 
