@@ -7,7 +7,6 @@ from .type import *
 from .qeccs import *
 
 
-# Implementing to_pennylane using traverse_circuit
 def traverse_ftcircuit[Q](circuit: FTCircuit[Q], msms:dict) -> None:
   """ Translate FTCircuit into PennyLane operations. """
 
