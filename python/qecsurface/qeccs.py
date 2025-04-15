@@ -292,7 +292,7 @@ class Bitflip[Q1,Q2](Map[Q1,Q2]):
     if isinstance(op, FTInit):
       if (op.alpha, op.beta) != (1.0, 0.0):
         raise ValueError(f"Bitflip only supports zero initializations, got {op}")
-      acc.append(bitlip_encode(qmap[op.qubit][0][0], qmap[op.qubit][0]))
+      acc.append(bitflip_encode(qmap[op.qubit][0][0], qmap[op.qubit][0]))
       acc.append(self._correction_cycle(op.qubit))
     elif isinstance(op, FTPrim):
       for q in op.qubits:

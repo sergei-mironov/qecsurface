@@ -118,8 +118,9 @@ def labels[Q](c:FTCircuit[Q]) -> set[Q]:
 
 @dataclass
 class Map[Q1,Q2]:
-  """ Base class for Quantum error correction codes. """
+  """ Map circuit handler base class. """
   def map_op(self, op:FTOp[Q1]) -> FTCircuit[Q2]:
+    """ Maps an operation of the source circuit into the destination circuit """
     raise NotImplementedError
 
 

@@ -217,3 +217,13 @@ def test_bitflip_full(e):
   probs = cPL()
   assert_allclose(probs, [0.5, 0.,  0.,  0.,  0.,  0.,  0.,  0.5])
 
+
+def test_map_bitflip():
+  c1 = FTOps([
+    FTInit(qubit=0, alpha=1.0, beta=0.0),
+    FTPrim(name=OpName.X, qubits=[0])
+  ])
+  c2 = map_circuit(c1, Bitflip(qmap={0: ([0,1,2], [3,4])}))
+  cPL = to_pennylane_probs(c2)
+  print(qml.draw(cPL)())
+
