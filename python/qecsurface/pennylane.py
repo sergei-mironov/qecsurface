@@ -47,6 +47,8 @@ def traverse_ftcircuit[Q](circuit: FTCircuit[Q], msms:dict) -> None:
           qml.cond(op.cond(msms),qml.PauliZ)(wires=q)
         else:
           raise ValueError(f"Unsupported nested op: {op.op}")
+    elif isinstance(op, FTErr):
+      raise ValueError(f"FTErr ({op}) does not have an explicit representation in PennyLane")
     else:
       raise ValueError(f"Unrecognized FTOp: {op}")
     return msms

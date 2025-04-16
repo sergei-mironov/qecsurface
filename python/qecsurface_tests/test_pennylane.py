@@ -218,12 +218,15 @@ def test_bitflip_full(e):
   assert_allclose(probs, [0.5, 0.,  0.,  0.,  0.,  0.,  0.,  0.5])
 
 
-def test_map_bitflip():
+@pytest.mark.parametrize("e", BITFLIP_DATA_QUBITS)
+def test_map_bitflip(e):
   c1 = FTOps([
-    FTInit(qubit=0, alpha=1.0, beta=0.0),
-    FTPrim(name=OpName.X, qubits=[0])
+    FTInit(0, 1/2, 1/2),
+    FTErr(0, e, name=OpName.X)
   ])
   c2 = map_circuit(c1, Bitflip(qmap={0: ([0,1,2], [3,4])}))
-  cPL = to_pennylane_probs(c2)
+  cPL = to_pennylane_probs(c2, [0,1,2])
   print(qml.draw(cPL)())
+  probs = cPL()
+  assert_allclose(probs, [0.5, 0.,  0.,  0.,  0.,  0.,  0.,  0.5])
 

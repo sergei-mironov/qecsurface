@@ -17,7 +17,8 @@ def opname2str(n:OpName)->str:
   return {OpName.I:'I', OpName.H:'H', OpName.Z:'Z', OpName.X:'X'}[n]
 
 # Common type alias for quantum operations
-type FTOp[Q] = Union["FTInit[Q]", "FTPrim[Q]", "FTCond[Q]", "FTCtrl[Q]", "FTMeasure[Q]"]
+type FTOp[Q] = Union["FTInit[Q]", "FTPrim[Q]", "FTCond[Q]", "FTCtrl[Q]", "FTMeasure[Q]",
+                     "FTErr[Q]"]
 
 @dataclass
 class FTInit[Q]:
@@ -53,6 +54,13 @@ class FTCond[Q]:
   """ A quantum operation applied if a classical condition is met. """
   cond:Callable[[dict[MeasureLabel[Q],int]],bool]
   op:FTOp[Q]
+
+@dataclass
+class FTErr[Q]:
+  """ Apply an error to `phys` physical qubit constituting the logical qubit Q. """
+  qubit:Q
+  phys:int
+  name:OpName
 
 # Common type alias for quantum circuits, where Q is type of qubit label.
 type FTCircuit[Q] = Union["FTOps[Q]", "FTComp[Q]"]
@@ -107,6 +115,8 @@ def labels[Q](c:FTCircuit[Q]) -> set[Q]:
       acc = _traverse_op(op.op, acc)
     elif isinstance(op, FTCond):
       acc = _traverse_op(op.op, acc)
+    elif isinstance(op, FTErr):
+      acc.add(op.qubit)
     else:
       raise ValueError(f"Unrecognized FTOp: {op}")
     return acc

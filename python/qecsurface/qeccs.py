@@ -271,6 +271,7 @@ def bitflip_correct[Q](data:list[Q], layer:int=0) -> FTCircuit[Q]:
 
 @dataclass
 class Bitflip[Q1,Q2](Map[Q1,Q2]):
+  """ Maps quantum circuit into a quantum circuit with Bitflip quantum error correction. """
   qmap:dict[Q1,tuple[list[Q2],list[Q2]]]
   layer:int = 0
 
@@ -290,10 +291,16 @@ class Bitflip[Q1,Q2](Map[Q1,Q2]):
     qmap = self.qmap
     acc = []
     if isinstance(op, FTInit):
-      if (op.alpha, op.beta) != (1.0, 0.0):
-        raise ValueError(f"Bitflip only supports zero initializations, got {op}")
-      acc.append(bitflip_encode(qmap[op.qubit][0][0], qmap[op.qubit][0]))
-      acc.append(self._correction_cycle(op.qubit))
+      q = op.qubit
+      acc.append(FTOps([FTInit(qmap[q][0][0], op.alpha, op.beta)]))
+      acc.append(bitflip_encode(qmap[q][0][0], qmap[q][0]))
+      acc.append(self._correction_cycle(q))
+    elif isinstance(op, FTErr):
+      q = op.qubit
+      qubits = qmap[q][0]
+      equbit = qubits[op.phys % len(qubits)]
+      acc.append(FTOps([FTPrim(op.name, [equbit])]))
+      acc.append(self._correction_cycle(q))
     elif isinstance(op, FTPrim):
       for q in op.qubits:
         qubits = qmap[q][0]
@@ -310,6 +317,48 @@ class Bitflip[Q1,Q2](Map[Q1,Q2]):
     return reduce(FTComp, acc)
 
 
+@dataclass
+class Surface25u[Q1, Q2](Map[Q1, Q2]):
+  qmap: dict[Q1, tuple[list[Q2], list[Q2]]]
+  layer: int = 0
+
+  def _next_layer(self) -> int:
+    l = self.layer
+    self.layer += 1
+    return l
+
+  def _detection_cycle(self, q: Q1) -> tuple[FTCircuit[Q2], list[MeasureLabel]]:
+    qubits, syndromes = self.qmap[q]
+    layer = self._next_layer()
+    return surface25u_detect(qubits, syndromes, layer)
+
+  def _correction_cycle(self, q: Q1, layer: int) -> FTCircuit[Q2]:
+    qubits, _ = self.qmap[q]
+    return surface25u_correct(qubits, layer - 1, layer)
+
+  def map_op(self, op: FTOp[Q1]) -> FTCircuit[Q2]:
+    qmap = self.qmap
+    acc = []
+    if isinstance(op, FTInit):
+      acc.append(FTOps([FTInit(qmap[op.qubit][0][0], op.alpha, op.beta)]))
+      detection_circuit, _ = self._detection_cycle(op.qubit)
+      acc.append(detection_circuit)
+    elif isinstance(op, FTPrim):
+      for q in op.qubits:
+        qubits = qmap[q][0]
+        if op.name in [OpName.X, OpName.Z]:
+          acc.append(FTOps([FTPrim(op.name, qubits)]))
+          detection_circuit, _ = self._detection_cycle(q)
+          acc.append(detection_circuit)
+    else:
+      raise ValueError(f"Surface25u qecc: Unsupported operation: {op}")
+
+    # Execute correction after each logical operation
+    _, labels = self._detection_cycle(op.qubits[0])  # Assuming all qubits are part of the detection
+    correction_circuit = self._correction_cycle(op.qubits[0], self.layer)
+    acc.append(correction_circuit)
+
+    return reduce(FTComp, acc)
 
 # @dataclass
 # class Surface25[Q1,Q2](QECC[Q1,Q2]):
