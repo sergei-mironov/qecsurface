@@ -1,0 +1,15 @@
+# vim:syntax=sh
+
+enter ./python
+  export LITREPL_AI_AUXDIR_OLD=$LITREPL_AI_AUXDIR
+  export LITREPL_AI_AUXDIR=$PROJECT_ROOT/_litrepl/ai/per-task/python
+leave ./python
+  export LITREPL_AI_AUXDIR=$LITREPL_AI_AUXDIR_OLD
+  unset LITREPL_AI_AUXDIR_OLD
+
+enter ./tex
+  export LITREPL_AI_AUXDIR_OLD=$LITREPL_AI_AUXDIR
+  export LITREPL_AI_AUXDIR=$PROJECT_ROOT/_litrepl/ai/per-task/python
+leave ./tex
+  export LITREPL_AI_AUXDIR=$LITREPL_AI_AUXDIR_OLD
+  unset LITREPL_AI_AUXDIR_OLD
