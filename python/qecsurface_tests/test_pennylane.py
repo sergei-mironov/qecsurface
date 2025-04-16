@@ -140,20 +140,20 @@ def test_surface25u_correct(error_qubit, error_op):
   data = SURFACE25U_DATA_QUBITS
   syndrome = [13]
   layer0,layer1,layer2 = 0,1,2
-  c1,l1 = surface25u_detect(data, syndrome, layer0)          # (a)
-  err = FTOps([FTPrim(error_op,[error_qubit])])              # (b)
-  c2,l2 = surface25u_detect(data, syndrome, layer1)          # (c)
-  corr = surface25u_correct(data, layer0, layer1)            # (d)
-  c3,l3 = surface25u_detect(data, syndrome, layer2)          # (e)
-  cPL = to_pennylane_mcm(reduce(FTComp,[c1,err,c2,corr,c3])) # (f)
-  msms = cPL()                                               # (g)
-  expected = surface25u_print2(msms, l1)
+  c1,ml1 = surface25u_detect(data, syndrome, layer0)          # (a)
+  err = FTOps([FTPrim(error_op,[error_qubit])])               # (b)
+  c2,ml2 = surface25u_detect(data, syndrome, layer1)          # (c)
+  corr = surface25u_correct(data, layer0, layer1)             # (d)
+  c3,ml3 = surface25u_detect(data, syndrome, layer2)          # (e)
+  cPL = to_pennylane_mcm(reduce(FTComp,[c1,err,c2,corr,c3]))  # (f)
+  msms = cPL()                                                # (g)
+  expected = surface25u_print2(msms, ml1)
   assert all(e not in expected for e in "XZ"), f"Errors in the zero state:\n{expected}"
-  synd = surface25u_print2(msms, l2)
+  synd = surface25u_print2(msms, ml2)
   print("Error syndrome:")
   print(synd)
   assert any(e in synd for e in "XZ"), f"Errors not found in the syndrome:\n{synd}"
-  actual = surface25u_print2(msms, l3)
+  actual = surface25u_print2(msms, ml3)
   assert actual == expected, f"Correction failed:\n{actual}"
 
 
@@ -218,15 +218,39 @@ def test_bitflip_full(e):
   assert_allclose(probs, [0.5, 0.,  0.,  0.,  0.,  0.,  0.,  0.5])
 
 
-@pytest.mark.parametrize("e", BITFLIP_DATA_QUBITS)
+@pytest.mark.parametrize("e", list(range(len(BITFLIP_DATA_QUBITS))))
 def test_map_bitflip(e):
+  data = BITFLIP_DATA_QUBITS
   c1 = FTOps([
     FTInit(0, 1/2, 1/2),
     FTErr(0, e, name=OpName.X)
   ])
-  c2 = map_circuit(c1, Bitflip(qmap={0: ([0,1,2], [3,4])}))
-  cPL = to_pennylane_probs(c2, [0,1,2])
+  c2 = map_circuit(c1, Bitflip(qmap={0: (data, [3,4])}))
+  cPL = to_pennylane_probs(c2, data)
   print(qml.draw(cPL)())
   probs = cPL()
   assert_allclose(probs, [0.5, 0.,  0.,  0.,  0.,  0.,  0.,  0.5])
+
+
+@pytest.mark.parametrize("e", list(range(len(SURFACE25U_DATA_QUBITS))))
+def test_map_surface25u(e):
+  data = SURFACE25U_DATA_QUBITS
+  c1 = FTOps([
+    FTInit(0, 1.0, 0),
+    FTErr(0, e, name=OpName.X),
+    FTPrim(OpName.I, [0])
+  ])
+  mapper = Surface25u(qmap={0: (data, 13)})
+  c2 = map_circuit(c1, mapper)
+  cPL = to_pennylane_mcm(c2)
+  print(qml.draw(cPL)())
+  msms = cPL()
+  expected = surface25u_print2(msms, mapper.mls[0][0], mapper.layers0[0])
+  print(expected)
+  detected = surface25u_print2(msms, mapper.mls[0][1], mapper.layers0[0])
+  print(detected)
+  corrected = surface25u_print2(msms, mapper.mls[0][2], mapper.layers0[0])
+  print(corrected)
+  assert expected != detected
+  assert expected == corrected
 

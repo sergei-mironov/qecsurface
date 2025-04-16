@@ -1,6 +1,8 @@
 """ The module defines QECC circuit parts. """
 from functools import reduce
 from textwrap import dedent
+from dataclasses import field
+from collections import defaultdict
 from .type import *
 
 
@@ -111,7 +113,7 @@ def surface25u_print(msms:dict[MeasureLabel,int], flt:list[MeasureLabel]):
   ''').replace('?','%s') % tuple((opname2str(l[1]) if msms[l] == 1 else ' ') for l in flt)
 
 
-def surface25u_print2(msms:dict[MeasureLabel,int], flt:list[MeasureLabel]):
+def surface25u_print2(msms:dict[MeasureLabel,int], flt:list[MeasureLabel], ref_layer:int=0):
   """ Visualize the surface25 syndromes. Highlight only those syndromes that mismatch the layer-0
   syndromes. """
   return dedent('''
@@ -121,7 +123,7 @@ def surface25u_print2(msms:dict[MeasureLabel,int], flt:list[MeasureLabel]):
     ? o ? o ?
     o ? o ? o
   ''').replace('?','%s') % tuple(
-    (opname2str(l[1]) if msms[l] != msms[(0,*l[1:])] else ' ') for l in flt
+    (opname2str(l[1]) if msms[l] != msms[(ref_layer,*l[1:])] else ' ') for l in flt
   )
 
 def surface25u_correct[Q](data:list[Q], layer0:int, layer:int) -> FTCircuit[Q]:
@@ -280,7 +282,7 @@ class Bitflip[Q1,Q2](Map[Q1,Q2]):
     self.layer = self.layer + 1
     return l
 
-  def _correction_cycle(self, q:Q1) -> FTCircuit[Q2]:
+  def _error_correction_cycle(self, q:Q1) -> FTCircuit[Q2]:
     qubits, syndromes = self.qmap[q]
     layer = self._next_layer()
     det = bitflip_detect(qubits, syndromes, layer)
@@ -294,24 +296,24 @@ class Bitflip[Q1,Q2](Map[Q1,Q2]):
       q = op.qubit
       acc.append(FTOps([FTInit(qmap[q][0][0], op.alpha, op.beta)]))
       acc.append(bitflip_encode(qmap[q][0][0], qmap[q][0]))
-      acc.append(self._correction_cycle(q))
     elif isinstance(op, FTErr):
       q = op.qubit
       qubits = qmap[q][0]
       equbit = qubits[op.phys % len(qubits)]
       acc.append(FTOps([FTPrim(op.name, [equbit])]))
-      acc.append(self._correction_cycle(q))
+      acc.append(self._error_correction_cycle(q))
     elif isinstance(op, FTPrim):
       for q in op.qubits:
         qubits = qmap[q][0]
-        if op.name == OpName.X:
+        if op.name == OpName.I:
+          pass
+        elif op.name == OpName.X:
           acc.append(FTOps([FTPrim(OpName.X, qubits)]))
-          acc.append(self._correction_cycle(q))
         elif op.name == OpName.Z:
           acc.append(FTOps([FTPrim(OpName.Z, qubits)]))
-          acc.append(self._correction_cycle(q))
         else:
           raise ValueError(f"Bitflip qecc: Unsupported primitive operation: {op}")
+        acc.append(self._error_correction_cycle(q))
     else:
       raise ValueError(f"Bitflip qecc: Unsupported operation: {op}")
     return reduce(FTComp, acc)
@@ -319,55 +321,62 @@ class Bitflip[Q1,Q2](Map[Q1,Q2]):
 
 @dataclass
 class Surface25u[Q1, Q2](Map[Q1, Q2]):
-  qmap: dict[Q1, tuple[list[Q2], list[Q2]]]
+  qmap: dict[Q1, tuple[list[Q2], Q2]]
   layer: int = 0
+  layers0: dict[Q1, int] = field(default_factory=dict)
+  mls: dict[Q1, list[MeasureLabel]] = field(default_factory=lambda: defaultdict(list))
 
   def _next_layer(self) -> int:
     l = self.layer
     self.layer += 1
     return l
 
-  def _detection_cycle(self, q: Q1) -> tuple[FTCircuit[Q2], list[MeasureLabel]]:
-    qubits, syndromes = self.qmap[q]
+  def _error_correction_cycle(self, q:Q1, layer0:int) -> FTCircuit[Q2]:
+    qubits, syndrome = self.qmap[q]
     layer = self._next_layer()
-    return surface25u_detect(qubits, syndromes, layer)
-
-  def _correction_cycle(self, q: Q1, layer: int) -> FTCircuit[Q2]:
-    qubits, _ = self.qmap[q]
-    return surface25u_correct(qubits, layer - 1, layer)
+    det, ml = surface25u_detect(qubits, [syndrome], layer)
+    corr = surface25u_correct(qubits, layer0, layer)
+    self.mls[q].append(ml)
+    return FTComp(det,corr)
 
   def map_op(self, op: FTOp[Q1]) -> FTCircuit[Q2]:
     qmap = self.qmap
+    layers0 = self.layers0
     acc = []
     if isinstance(op, FTInit):
-      acc.append(FTOps([FTInit(qmap[op.qubit][0][0], op.alpha, op.beta)]))
-      detection_circuit, _ = self._detection_cycle(op.qubit)
-      acc.append(detection_circuit)
+      if (op.alpha, op.beta) != (1.0, 0.0):
+        raise ValueError(f"Surface25u could only be initialized with |0> (got {op})")
+      q = op.qubit
+      qubits, syndrome = qmap[q]
+      layers0[q] = self._next_layer()
+      c, ml = surface25u_detect(qubits, [syndrome], layers0[q])
+      self.mls[q].append(ml)
+      acc.append(c)
+    elif isinstance(op, FTErr):
+      q = op.qubit
+      if layers0.get(q) is None:
+        raise ValueError(f"Surface25u: qubit {q} was not initialized")
+      qubits,_ = qmap[q]
+      equbit = qubits[op.phys % len(qubits)]
+      acc.append(FTOps([FTPrim(op.name, [equbit])]))
+      acc.append(self._error_correction_cycle(q, layers0[q]))
     elif isinstance(op, FTPrim):
       for q in op.qubits:
-        qubits = qmap[q][0]
-        if op.name in [OpName.X, OpName.Z]:
-          acc.append(FTOps([FTPrim(op.name, qubits)]))
-          detection_circuit, _ = self._detection_cycle(q)
-          acc.append(detection_circuit)
+        if layers0.get(q) is None:
+          raise ValueError(f"Surface25u: qubit {q} was not initialized")
+        qubits,_ = qmap[q]
+        if op.name == OpName.I:
+          pass
+        elif op.name == OpName.X:
+          acc.append(FTOps([FTPrim(op.name, [qubits[1], qubits[6], qubits[11]])]))
+        elif op.name == OpName.Z:
+          acc.append(FTOps([FTPrim(op.name, [qubits[5], qubits[6], qubits[7]])]))
+        else:
+          raise ValueError(f"Surface25u: Unsupported logical operation: {op}")
+        acc.append(self._error_correction_cycle(q, layers0[q]))
     else:
-      raise ValueError(f"Surface25u qecc: Unsupported operation: {op}")
-
-    # Execute correction after each logical operation
-    _, labels = self._detection_cycle(op.qubits[0])  # Assuming all qubits are part of the detection
-    correction_circuit = self._correction_cycle(op.qubits[0], self.layer)
-    acc.append(correction_circuit)
+      raise ValueError(f"Surface25u: Unsupported operation: {op}")
 
     return reduce(FTComp, acc)
-
-# @dataclass
-# class Surface25[Q1,Q2](QECC[Q1,Q2]):
-#   """ FIXME: todo """
-#   def detect(qubit:Q1) -> tuple[FTCircuit[Q2], list[MeasureLabel]]:
-#     raise NotImplementedError
-#   def correct(qubit:Q1, ms:dict[MeasureLabel,int]) -> FTCircuit[Q2]:
-#     raise NotImplementedError
-
-
 
 
