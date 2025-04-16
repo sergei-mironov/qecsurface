@@ -297,13 +297,13 @@ The qecsurface project defines the following main Python modules:
 
 \subsubsection{Mapping form circuit to circuit}
 
-The main operation defined on $FTCircuit$ is
+The map operation is defined on $FTCircuit_q$ is
 
 $$
-map\_circuit : Map_{a,b} \to FTCircuit_a \to FTCircuit_b
+\forall a,b . map\_circuit : Map_{a,b} \to FTCircuit_a \to FTCircuit_b
 $$
 
-The subsequent quantum error correction algorithms are defined as a derived classes of the
+The subsequent quantum error correction algorithms are defined as derived classes of the
 $Map_{a,b}$ base class.
 
   \begin{comment}
@@ -370,9 +370,8 @@ $Map_{a,b}$ base class.
   \label{fig:teleport}
 \end{figure}
 
-\subsection{Quantum error correction mappings}
 
-\subsubsection{Bitflip code}
+\subsubsection{Example: Bitflip code}
 
   \begin{comment}
     \begin{sh}
@@ -398,8 +397,9 @@ $Map_{a,b}$ base class.
   \end{python}
   %noresult
 
+\subsection{Quantum Error Correction with Surface25u}
 
-\subsubsection{Surface25u code}
+\subsubsection{Overview}
 
 We implement the Surface25 unified quantum error correction code following \cite{Tomita2014}.
 
@@ -410,6 +410,8 @@ We implement the Surface25 unified quantum error correction code following \cite
   \label{fig:surface25}
 \end{figure}
 
+
+\subsubsection{Error correction code primitives}
 
 We split the implementation in two functions:
 
@@ -469,6 +471,8 @@ We split the implementation in two functions:
 
 \le
 
+\subsubsection{Example: full error correction cycle}
+
 We demonstrate the usage with the following code. First, we initialize the $\ket{0_L}$ state by
 passing the $\ket{0}$ through the detection circuit and measuring stabilizer signs. Next, we
 introduce an error on the sixth qubit. Finally, we apply the error correction cycle where we use the
@@ -516,6 +520,8 @@ We make sure the error is gone by applying the final detection and re-running th
   o   o   o
   
   \end{result}
+
+\subsubsection{High-level interface: circuit mapper}
 
 Finally, we wrap these functions into the \t{Surface25u} circuit mapper interface.
 
