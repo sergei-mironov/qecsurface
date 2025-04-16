@@ -270,7 +270,7 @@ def bitflip_correct[Q](data:list[Q], layer:int=0) -> FTCircuit[Q]:
                 FTCond(e1, FTPrim(OpName.X, [d1])),
                 FTCond(e2, FTPrim(OpName.X, [d2]))])
 
-
+# Bitflip {{{
 @dataclass
 class Bitflip[Q1,Q2](Map[Q1,Q2]):
   """ Maps quantum circuit into a quantum circuit with Bitflip quantum error correction. """
@@ -317,8 +317,9 @@ class Bitflip[Q1,Q2](Map[Q1,Q2]):
     else:
       raise ValueError(f"Bitflip qecc: Unsupported operation: {op}")
     return reduce(FTComp, acc)
+# }}}
 
-
+# Surface25u {{{
 @dataclass
 class Surface25u[Q1, Q2](Map[Q1, Q2]):
   qmap: dict[Q1, tuple[list[Q2], Q2]]
@@ -377,6 +378,6 @@ class Surface25u[Q1, Q2](Map[Q1, Q2]):
     else:
       raise ValueError(f"Surface25u: Unsupported operation: {op}")
 
-    return reduce(FTComp, acc)
+    return reduce(FTComp, acc)# }}}
 
 

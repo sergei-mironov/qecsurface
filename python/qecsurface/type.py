@@ -6,6 +6,8 @@ from typing import Generic, Union, Callable
 from dataclasses import dataclass
 from enum import Enum
 
+# Quantum operation definitions {{{
+
 class OpName(Enum):
   """ Quantum operation labels """
   I = 0
@@ -62,6 +64,10 @@ class FTErr[Q]:
   phys:int
   name:OpName
 
+# }}}
+
+# Quantum circuit definitions {{{
+
 # Common type alias for quantum circuits, where Q is type of qubit label.
 type FTCircuit[Q] = Union["FTOps[Q]", "FTComp[Q]"]
 
@@ -76,6 +82,7 @@ class FTComp[Q]:
   a: FTCircuit[Q]
   b: FTCircuit[Q]
 
+# }}}
 
 def traverse_circuit[Q,A](
   circuit:FTCircuit[Q],
@@ -126,6 +133,8 @@ def labels[Q](c:FTCircuit[Q]) -> set[Q]:
   return acc
 
 
+# Circuit mapping {{{
+
 @dataclass
 class Map[Q1,Q2]:
   """ Map circuit handler base class. """
@@ -139,6 +148,6 @@ def map_circuit[Q1,Q2](c:FTCircuit[Q1], m:Map[Q1,Q2]) -> FTCircuit[Q2]:
     return FTComp(acc, m.map_op(op))
   return traverse_circuit(c, _traverse_op, FTOps([]))
 
-
+# }}}
 
 
