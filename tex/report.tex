@@ -156,5 +156,310 @@ errors without inherent contradictions.
     (\href{https://docs.pennylane.ai/en/stable/introduction/dynamic_quantum_circuits.html#conditional-operators}{link}).
 \le
 
+\subsection{Setup}
+
+The project could be cloned from the GitHub repository
+\url{https://github.com/sergei-mironov/qecsurface}. The repository contains sourceable file
+\t{env.sh} which adjusts \t{PATH} and \t{PYTHONPATH} environment variables to make project specific
+shell-scripts and Python modules available.
+
+Overall, the typical initizlization command sequence is follows:
+
+\begin{sh}
+$ git clone https://github.com/sergei-mironov/qecsurface
+$ cd qecsurface
+$ . env.sh
+$ ipython # Enter IPython interactive shell
+>>> from quecsurface import *
+>>> from quecsurface_tests import *
+\end{sh}
+
+
+\subsection{Overview}
+
+The qecsurface project defines the following main Python modules:
+
+\ls \t{qecsurface.type} defines a minimalistic domain-specific language for quantum circuits
+    modeling. The main data structure for circuits is named $FTCircuit$ where FT stands for
+    fault-tolerant.
+\li \t{qecsurface.pennylane} defines routines which lower $FTCircuits$ to PennyLane circuits.
+\li Finally, \t{qecsurface.qeccs} defines mappings from $FTCircuit \to FTCircuit$
+    which implements various specific Quantum error correction schemes.
+\le
+
+\subsection{Base Types}
+
+\subsubsection{Quantum Operations}
+
+  \begin{comment}
+    \begin{sh}
+    printf '\\begin{%s}\n' 'python'
+    cat $PROJECT_ROOT/python/qecsurface/type.py | sedlines.sh 'Quantum operation definitions'
+    printf '\\end{%s}\n' 'python'
+    \end{sh}
+  \end{comment}
+
+  %result
+  \begin{python}
+  class OpName(Enum):
+    """ Quantum operation labels """
+    I = 0
+    X = 1
+    Z = 2
+    H = 3
+  
+  def opname2str(n:OpName)->str:
+    return {OpName.I:'I', OpName.H:'H', OpName.Z:'Z', OpName.X:'X'}[n]
+  
+  # Common type alias for quantum operations
+  type FTOp[Q] = Union["FTInit[Q]", "FTPrim[Q]", "FTCond[Q]", "FTCtrl[Q]", "FTMeasure[Q]",
+                       "FTErr[Q]"]
+  
+  @dataclass
+  class FTInit[Q]:
+    """ Primitive quantum operation acting on one qubit. """
+    qubit:Q
+    alpha:complex
+    beta:complex
+  
+  @dataclass
+  class FTPrim[Q]:
+    """ Primitive quantum operation acting on one qubit. """
+    name:OpName
+    qubits:list[Q]
+  
+  @dataclass
+  class FTCtrl[Q]:
+    """ Quantum control operation acting on two qubits. """
+    control:Q
+    op:FTOp[Q]
+  
+  # Syndrome test measurement label encodes a layer, the syndrome type and the qubit labels
+  type MeasureLabel[Q] = tuple[int,OpName,tuple[Q,...]]
+  
+  @dataclass
+  class FTMeasure[Q]:
+    """ Quantum measure oprtation which acts on a `qubit`. Measurement result is assiciated with a
+    `label`. """
+    qubit:Q
+    label:MeasureLabel[Q]
+  
+  @dataclass
+  class FTCond[Q]:
+    """ A quantum operation applied if a classical condition is met. """
+    cond:Callable[[dict[MeasureLabel[Q],int]],bool]
+    op:FTOp[Q]
+  
+  @dataclass
+  class FTErr[Q]:
+    """ Apply an error to `phys` physical qubit constituting the logical qubit Q. """
+    qubit:Q
+    phys:int
+    name:OpName
+  \end{python}
+  %noresult
+
+\subsubsection{Quantum circuits}
+
+  \begin{comment}
+    \begin{sh}
+    printf '\\begin{%s}\n' 'python'
+    cat $PROJECT_ROOT/python/qecsurface/type.py | sedlines.sh 'Quantum circuit definitions'
+    printf '\\end{%s}\n' 'python'
+    \end{sh}
+  \end{comment}
+
+  %result
+  \begin{python}
+  # Common type alias for quantum circuits, where Q is type of qubit label.
+  type FTCircuit[Q] = Union["FTOps[Q]", "FTComp[Q]"]
+  
+  @dataclass
+  class FTOps[Q]:
+    """ A primitive circuit consisting of a tape of operations. """
+    ops:list[FTOp[Q]]
+  
+  @dataclass
+  class FTComp[Q]:
+    """ Composition of circuits, also known as circuit tensor product. """
+    a: FTCircuit[Q]
+    b: FTCircuit[Q]
+  \end{python}
+  %noresult
+
+
+\subsubsection{Mapping circuits}
+
+The main operation defined on $FTCircuit$ is
+
+$$
+map\_circuit : Map_{a,b} \to FTCircuit_a \to FTCircuit_b
+$$
+
+The subsequent quantum error correction algorithms are defined as a derived classes of the
+$Map_{a,b}$ base class.
+
+  \begin{comment}
+    \begin{sh}
+    printf '\\begin{%s}\n' 'python'
+    cat $PROJECT_ROOT/python/qecsurface/type.py | sedlines.sh 'Circuit mapping'
+    printf '\\end{%s}\n' 'python'
+    \end{sh}
+  \end{comment}
+
+  %result
+  \begin{python}
+  @dataclass
+  class Map[Q1,Q2]:
+    """ Map circuit handler base class. """
+    def map_op(self, op:FTOp[Q1]) -> FTCircuit[Q2]:
+      """ Maps an operation of the source circuit into the destination circuit """
+      raise NotImplementedError
+  
+  
+  def map_circuit[Q1,Q2](c:FTCircuit[Q1], m:Map[Q1,Q2]) -> FTCircuit[Q2]:
+    def _traverse_op(op:FTOp[Q1], acc) -> None:
+      return FTComp(acc, m.map_op(op))
+    return traverse_circuit(c, _traverse_op, FTOps([]))
+  \end{python}
+  %noresult
+
+
+\subsection{Quantum error correction mappings}
+
+\subsubsection{Bitflip code}
+
+  \begin{comment}
+    \begin{sh}
+    printf '\\begin{%s}\n' 'python'
+    cat $PROJECT_ROOT/python/qecsurface/qeccs.py | sedlines.sh 'Bitflip'
+    printf '\\end{%s}\n' 'python'
+    \end{sh}
+  \end{comment}
+
+  %result
+  \begin{python}
+  @dataclass
+  class Bitflip[Q1,Q2](Map[Q1,Q2]):
+    """ Maps quantum circuit into a quantum circuit with Bitflip quantum error correction. """
+    qmap:dict[Q1,tuple[list[Q2],list[Q2]]]
+    layer:int = 0
+  
+    def _next_layer(self) -> int:
+      l = self.layer
+      self.layer = self.layer + 1
+      return l
+  
+    def _error_correction_cycle(self, q:Q1) -> FTCircuit[Q2]:
+      qubits, syndromes = self.qmap[q]
+      layer = self._next_layer()
+      det = bitflip_detect(qubits, syndromes, layer)
+      corr = bitflip_correct(qubits, layer)
+      return FTComp(det,corr)
+  
+    def map_op(self, op:FTOp[Q1]) -> FTCircuit[Q2]:
+      qmap = self.qmap
+      acc = []
+      if isinstance(op, FTInit):
+        q = op.qubit
+        acc.append(FTOps([FTInit(qmap[q][0][0], op.alpha, op.beta)]))
+        acc.append(bitflip_encode(qmap[q][0][0], qmap[q][0]))
+      elif isinstance(op, FTErr):
+        q = op.qubit
+        qubits = qmap[q][0]
+        equbit = qubits[op.phys % len(qubits)]
+        acc.append(FTOps([FTPrim(op.name, [equbit])]))
+        acc.append(self._error_correction_cycle(q))
+      elif isinstance(op, FTPrim):
+        for q in op.qubits:
+          qubits = qmap[q][0]
+          if op.name == OpName.I:
+            pass
+          elif op.name == OpName.X:
+            acc.append(FTOps([FTPrim(OpName.X, qubits)]))
+          elif op.name == OpName.Z:
+            acc.append(FTOps([FTPrim(OpName.Z, qubits)]))
+          else:
+            raise ValueError(f"Bitflip qecc: Unsupported primitive operation: {op}")
+          acc.append(self._error_correction_cycle(q))
+      else:
+        raise ValueError(f"Bitflip qecc: Unsupported operation: {op}")
+      return reduce(FTComp, acc)
+  \end{python}
+  %noresult
+
+
+\subsubsection{Surface25u surface code}
+
+  \begin{comment}
+    \begin{sh}
+    printf '\\begin{%s}\n' 'python'
+    cat $PROJECT_ROOT/python/qecsurface/qeccs.py | sedlines.sh 'Surface25u'
+    printf '\\end{%s}\n' 'python'
+    \end{sh}
+  \end{comment}
+
+  %result
+  \begin{python}
+  @dataclass
+  class Surface25u[Q1, Q2](Map[Q1, Q2]):
+    qmap: dict[Q1, tuple[list[Q2], Q2]]
+    layer: int = 0
+    layers0: dict[Q1, int] = field(default_factory=dict)
+    mls: dict[Q1, list[MeasureLabel]] = field(default_factory=lambda: defaultdict(list))
+  
+    def _next_layer(self) -> int:
+      l = self.layer
+      self.layer += 1
+      return l
+  
+    def _error_correction_cycle(self, q:Q1, layer0:int) -> FTCircuit[Q2]:
+      qubits, syndrome = self.qmap[q]
+      layer = self._next_layer()
+      det, ml = surface25u_detect(qubits, [syndrome], layer)
+      corr = surface25u_correct(qubits, layer0, layer)
+      self.mls[q].append(ml)
+      return FTComp(det,corr)
+  
+    def map_op(self, op: FTOp[Q1]) -> FTCircuit[Q2]:
+      qmap = self.qmap
+      layers0 = self.layers0
+      acc = []
+      if isinstance(op, FTInit):
+        if (op.alpha, op.beta) != (1.0, 0.0):
+          raise ValueError(f"Surface25u could only be initialized with |0> (got {op})")
+        q = op.qubit
+        qubits, syndrome = qmap[q]
+        layers0[q] = self._next_layer()
+        c, ml = surface25u_detect(qubits, [syndrome], layers0[q])
+        self.mls[q].append(ml)
+        acc.append(c)
+      elif isinstance(op, FTErr):
+        q = op.qubit
+        if layers0.get(q) is None:
+          raise ValueError(f"Surface25u: qubit {q} was not initialized")
+        qubits,_ = qmap[q]
+        equbit = qubits[op.phys % len(qubits)]
+        acc.append(FTOps([FTPrim(op.name, [equbit])]))
+        acc.append(self._error_correction_cycle(q, layers0[q]))
+      elif isinstance(op, FTPrim):
+        for q in op.qubits:
+          if layers0.get(q) is None:
+            raise ValueError(f"Surface25u: qubit {q} was not initialized")
+          qubits,_ = qmap[q]
+          if op.name == OpName.I:
+            pass
+          elif op.name == OpName.X:
+            acc.append(FTOps([FTPrim(op.name, [qubits[1], qubits[6], qubits[11]])]))
+          elif op.name == OpName.Z:
+            acc.append(FTOps([FTPrim(op.name, [qubits[5], qubits[6], qubits[7]])]))
+          else:
+            raise ValueError(f"Surface25u: Unsupported logical operation: {op}")
+          acc.append(self._error_correction_cycle(q, layers0[q]))
+      else:
+        raise ValueError(f"Surface25u: Unsupported operation: {op}")
+  \end{python}
+  %noresult
+
 % \input{_discussions.tex}
 
