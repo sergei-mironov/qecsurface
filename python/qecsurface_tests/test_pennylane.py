@@ -245,11 +245,11 @@ def test_map_surface25u(e):
   cPL = to_pennylane_mcm(c2)
   print(qml.draw(cPL)())
   msms = cPL()
-  expected = surface25u_print2(msms, mapper.mls[0][0], mapper.layers0[0])
+  expected = surface25u_print2(msms, mapper._mls[0][0], mapper._layers0[0])
   print(expected)
-  detected = surface25u_print2(msms, mapper.mls[0][1], mapper.layers0[0])
+  detected = surface25u_print2(msms, mapper._mls[0][1], mapper._layers0[0])
   print(detected)
-  corrected = surface25u_print2(msms, mapper.mls[0][2], mapper.layers0[0])
+  corrected = surface25u_print2(msms, mapper._mls[0][2], mapper._layers0[0])
   print(corrected)
   assert expected != detected
   assert expected == corrected

@@ -137,13 +137,14 @@ def labels[Q](c:FTCircuit[Q]) -> set[Q]:
 
 @dataclass
 class Map[Q1,Q2]:
-  """ Map circuit handler base class. """
+  """ Base class for stateful circuit mapping algorithms. """
   def map_op(self, op:FTOp[Q1]) -> FTCircuit[Q2]:
-    """ Maps an operation of the source circuit into the destination circuit """
+    """ Maps an operation of a source circuit into a destination circuit. """
     raise NotImplementedError
 
 
 def map_circuit[Q1,Q2](c:FTCircuit[Q1], m:Map[Q1,Q2]) -> FTCircuit[Q2]:
+  """ Maps the circuit `c` by mapping each its operation and taking a compostion """
   def _traverse_op(op:FTOp[Q1], acc) -> None:
     return FTComp(acc, m.map_op(op))
   return traverse_circuit(c, _traverse_op, FTOps([]))

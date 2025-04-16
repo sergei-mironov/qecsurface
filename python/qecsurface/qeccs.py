@@ -71,7 +71,7 @@ def surface25[Q](data: list[Q], syndrome: list[Q]) -> FTCircuit[Q]:
   return reduce(FTComp, tiles)
 
 
-def surface25u_detect[Q](
+def surface25u_detect[Q](# {{{
   data: list[Q], syndrome: list[Q], layer:int=0
 ) -> tuple[FTCircuit[Q],list[MeasureLabel]]:
   """ Build the surface25u error detection circuit. Return the circuit alongside with a list of
@@ -100,6 +100,7 @@ def surface25u_detect[Q](
               SX([d8,d10,d11],s), SX([d9,d11,d12],s),
   ]
   return reduce(FTComp, tiles), labels
+# }}}
 
 
 def surface25u_print(msms:dict[MeasureLabel,int], flt:list[MeasureLabel]):
@@ -113,7 +114,7 @@ def surface25u_print(msms:dict[MeasureLabel,int], flt:list[MeasureLabel]):
   ''').replace('?','%s') % tuple((opname2str(l[1]) if msms[l] == 1 else ' ') for l in flt)
 
 
-def surface25u_print2(msms:dict[MeasureLabel,int], flt:list[MeasureLabel], ref_layer:int=0):
+def surface25u_print2(msms:dict[MeasureLabel,int], flt:list[MeasureLabel], ref_layer:int=0):# {{{
   """ Visualize the surface25 syndromes. Highlight only those syndromes that mismatch the layer-0
   syndromes. """
   return dedent('''
@@ -125,8 +126,9 @@ def surface25u_print2(msms:dict[MeasureLabel,int], flt:list[MeasureLabel], ref_l
   ''').replace('?','%s') % tuple(
     (opname2str(l[1]) if msms[l] != msms[(ref_layer,*l[1:])] else ' ') for l in flt
   )
+# }}}
 
-def surface25u_correct[Q](data:list[Q], layer0:int, layer:int) -> FTCircuit[Q]:
+def surface25u_correct[Q](data:list[Q], layer0:int, layer:int) -> FTCircuit[Q]:# {{{
   """ Build the surface25u error correction circuit assuming `layer` measurememnts are available.
   Use `layer0` measurements as a reference. """
   def _corrector(op, opc, d):
@@ -144,6 +146,7 @@ def surface25u_correct[Q](data:list[Q], layer0:int, layer:int) -> FTCircuit[Q]:
     FTOps([_corrector(OpName.X, OpName.Z, d) for d in data]),
     FTOps([_corrector(OpName.Z, OpName.X, d) for d in data])
   )
+# }}}
 
 def surface17u_detect[Q](
   data: list[Q], syndrome: list[Q], layer:int=0
@@ -323,13 +326,13 @@ class Bitflip[Q1,Q2](Map[Q1,Q2]):
 @dataclass
 class Surface25u[Q1, Q2](Map[Q1, Q2]):
   qmap: dict[Q1, tuple[list[Q2], Q2]]
-  layer: int = 0
-  layers0: dict[Q1, int] = field(default_factory=dict)
-  mls: dict[Q1, list[MeasureLabel]] = field(default_factory=lambda: defaultdict(list))
+  _layer: int = 0
+  _layers0: dict[Q1, int] = field(default_factory=dict)
+  _mls: dict[Q1, list[MeasureLabel]] = field(default_factory=lambda: defaultdict(list))
 
   def _next_layer(self) -> int:
-    l = self.layer
-    self.layer += 1
+    l = self._layer
+    self._layer += 1
     return l
 
   def _error_correction_cycle(self, q:Q1, layer0:int) -> FTCircuit[Q2]:
@@ -337,12 +340,12 @@ class Surface25u[Q1, Q2](Map[Q1, Q2]):
     layer = self._next_layer()
     det, ml = surface25u_detect(qubits, [syndrome], layer)
     corr = surface25u_correct(qubits, layer0, layer)
-    self.mls[q].append(ml)
+    self._mls[q].append(ml)
     return FTComp(det,corr)
 
   def map_op(self, op: FTOp[Q1]) -> FTCircuit[Q2]:
     qmap = self.qmap
-    layers0 = self.layers0
+    layers0 = self._layers0
     acc = []
     if isinstance(op, FTInit):
       if (op.alpha, op.beta) != (1.0, 0.0):
@@ -351,7 +354,7 @@ class Surface25u[Q1, Q2](Map[Q1, Q2]):
       qubits, syndrome = qmap[q]
       layers0[q] = self._next_layer()
       c, ml = surface25u_detect(qubits, [syndrome], layers0[q])
-      self.mls[q].append(ml)
+      self._mls[q].append(ml)
       acc.append(c)
     elif isinstance(op, FTErr):
       q = op.qubit
@@ -378,6 +381,7 @@ class Surface25u[Q1, Q2](Map[Q1, Q2]):
     else:
       raise ValueError(f"Surface25u: Unsupported operation: {op}")
 
-    return reduce(FTComp, acc)# }}}
+    return reduce(FTComp, acc)
+# }}}
 
 
