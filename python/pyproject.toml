@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "quecsurface"
+version = "0.1.0"
+description = "A minimalistic domain-specific language for experimenting with fault-tolerant quantum computing."
+authors = ["Sergei Mironov <sergei.v.mironov@proton.me>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+pennylane = "^0.40"
+dataclasses = "*"
+pytest = "*"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[[tool.poetry.packages]]
+include = "qecsurface"
+
+[tool.testing]
+example_test = "python -m pytest"
+
+[tool.black]
+line-length = 100
+
+[tool.flake8]
+max-line-length = 100
+
