@@ -8,7 +8,7 @@ from qecsurface import *
 
 def test_to_sympy():
   circuit = FTOps([
-    FTPrim(OpName.X, [1,2]),     # Apply X on qubit 0
+    FTPrim(OpName.X, [1,2]),
   ])
 
   result_matrix = to_sympy(circuit)
