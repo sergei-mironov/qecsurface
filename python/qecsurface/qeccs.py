@@ -71,35 +71,45 @@ def surface25[Q](data: list[Q], syndrome: list[Q]) -> FTCircuit[Q]:
   return reduce(FTComp, tiles)
 
 
+def surface25_stabilizers() -> list[FTPrim[int]]:# {{{
+  """ Surface25 stabilizers. Qubit labels may be interpreted as indices. """
+  def X(data):
+    return FTPrim(OpName.X, data)
+  def Z(data):
+    return FTPrim(OpName.Z, data)
+  return [
+            X([0,1,3]), X([1,2,4]),
+    Z([0,3,5]), Z([1,3,4,6]), Z([2,4,7]),
+           X([3,5,6,8]), X([4,6,7,9]),
+    Z([5,8,10]), Z([6,8,9,11]), Z([7,9,12]),
+           X([8,10,11]), X([9,11,12]),
+  ]
+# }}}
+
 def surface25u_detect[Q](# {{{
-  data: list[Q], syndrome: list[Q], layer:int=0
+  data: list[Q], syndromes: list[Q], layer:int=0
 ) -> tuple[FTCircuit[Q],list[MeasureLabel]]:
   """ Build the surface25u error detection circuit. Return the circuit alongside with a list of
   mid-circuit measurement labels. """
   assert len(data) == 13, f"Expected 13 data qubit labels, got {data}"
-  assert len(syndrome) == 1, f"Expected 1 syndrome qubit label, got {syndrome}"
+  assert len(syndromes) == 1, f"Expected 1 syndrome qubit label, got {syndrome}"
 
-  d0, d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12 = [*data]
-  s, = [*syndrome]
   labels = []
+  def _to_test(op):
+    qubits = [data[q] for q in op.qubits]
+    syndrome = syndromes[0]
+    if op.name == OpName.X:
+      label = (layer,OpName.X,tuple(qubits))
+      labels.append(label)
+      return stabilizer_test_X(FTPrim(OpName.X, qubits), syndrome, label)
+    elif op.name == OpName.Z:
+      label = (layer,OpName.Z,tuple(qubits))
+      labels.append(label)
+      return stabilizer_test_Z(FTPrim(OpName.Z, qubits), syndrome, label)
+    else:
+      raise ValueError(f"Unrecognized op {op}")
 
-  def SX(data, syndrome):
-    label = (layer,OpName.X,tuple(data))
-    labels.append(label)
-    return stabilizer_test_X(FTPrim(OpName.X, data), syndrome, label)
-  def SZ(data, syndrome):
-    label = (layer,OpName.Z,tuple(data))
-    labels.append(label)
-    return stabilizer_test_Z(FTPrim(OpName.Z, data), syndrome, label)
-
-  tiles = [
-              SX([d0,d1,d3],s), SX([d1,d2,d4],s),
-    SZ([d0,d3,d5],s), SZ([d1,d3,d4,d6],s), SZ([d2,d4,d7],s),
-           SX([d3,d5,d6,d8],s), SX([d4,d6,d7,d9],s),
-    SZ([d5,d8,d10],s), SZ([d6,d8,d9,d11],s), SZ([d7,d9,d12],s),
-              SX([d8,d10,d11],s), SX([d9,d11,d12],s),
-  ]
-  return reduce(FTComp, tiles), labels
+  return reduce(FTComp, [_to_test(op) for op in surface25_stabilizers()]), labels
 # }}}
 
 
