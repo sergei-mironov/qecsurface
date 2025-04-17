@@ -93,23 +93,20 @@ def surface25u_detect[Q](# {{{
   mid-circuit measurement labels. """
   assert len(data) == 13, f"Expected 13 data qubit labels, got {data}"
   assert len(syndromes) == 1, f"Expected 1 syndrome qubit label, got {syndrome}"
-
+  syndrome = syndromes[0]
   labels = []
-  def _to_test(op):
+
+  def _to_hadamard_test(op):
     qubits = [data[q] for q in op.qubits]
-    syndrome = syndromes[0]
+    labels.append((layer,op.name,tuple(qubits)))
     if op.name == OpName.X:
-      label = (layer,OpName.X,tuple(qubits))
-      labels.append(label)
-      return stabilizer_test_X(FTPrim(OpName.X, qubits), syndrome, label)
+      return stabilizer_test_X(FTPrim(OpName.X, qubits), syndrome, labels[-1])
     elif op.name == OpName.Z:
-      label = (layer,OpName.Z,tuple(qubits))
-      labels.append(label)
-      return stabilizer_test_Z(FTPrim(OpName.Z, qubits), syndrome, label)
+      return stabilizer_test_Z(FTPrim(OpName.Z, qubits), syndrome, labels[-1])
     else:
       raise ValueError(f"Unrecognized op {op}")
 
-  return reduce(FTComp, [_to_test(op) for op in surface25_stabilizers()]), labels
+  return reduce(FTComp, map(_to_hadamard_test, surface25_stabilizers())), labels
 # }}}
 
 

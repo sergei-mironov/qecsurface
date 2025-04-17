@@ -461,18 +461,18 @@ We split the implementation in several functions:
     \begin{sh}
     printf '\\begin{%s}\n' 'python'
     cat $PROJECT_ROOT/python/qecsurface/qeccs.py | \
-      sedlines.sh -C 'surface25_stabilizers'
+      sedlines.sh 'surface25_stabilizers'
     printf '\\end{%s}\n' 'python'
     \end{sh}
   \end{comment}
 
   %result
   \begin{python}
-  def surface25_stabilizers() -> list[FTPrim[int]]
+  def surface25_stabilizers() -> list[FTPrim[int]]:
     """ Surface25 stabilizers. Qubit labels may be interpreted as indices. """
-    def X(data)
+    def X(data):
       return FTPrim(OpName.X, data)
-    def Z(data)
+    def Z(data):
       return FTPrim(OpName.Z, data)
     return [
               X([0,1,3]), X([1,2,4]),
@@ -492,7 +492,7 @@ We split the implementation in several functions:
     \begin{sh}
     printf '\\begin{%s}\n' 'python'
     cat $PROJECT_ROOT/python/qecsurface/qeccs.py | \
-      sedlines.sh -C 'surface25u_detect'
+      sedlines.sh 'surface25u_detect'
     printf '\\end{%s}\n' 'python'
     \end{sh}
   \end{comment}
@@ -501,28 +501,25 @@ We split the implementation in several functions:
   \begin{python}
   def surface25u_detect[Q](
     data: list[Q], syndromes: list[Q], layer:int=0
-  ) -> tuple[FTCircuit[Q],list[MeasureLabel]]
+  ) -> tuple[FTCircuit[Q],list[MeasureLabel]]:
     """ Build the surface25u error detection circuit. Return the circuit alongside with a list of
     mid-circuit measurement labels. """
     assert len(data) == 13, f"Expected 13 data qubit labels, got {data}"
     assert len(syndromes) == 1, f"Expected 1 syndrome qubit label, got {syndrome}"
-
+    syndrome = syndromes[0]
     labels = []
-    def _to_test(op)
+
+    def _to_hadamard_test(op):
       qubits = [data[q] for q in op.qubits]
-      syndrome = syndromes[0]
-      if op.name == OpName.X
-        label = (layer,OpName.X,tuple(qubits))
-        labels.append(label)
-        return stabilizer_test_X(FTPrim(OpName.X, qubits), syndrome, label)
-      elif op.name == OpName.Z
-        label = (layer,OpName.Z,tuple(qubits))
-        labels.append(label)
-        return stabilizer_test_Z(FTPrim(OpName.Z, qubits), syndrome, label)
-      else
+      labels.append((layer,op.name,tuple(qubits)))
+      if op.name == OpName.X:
+        return stabilizer_test_X(FTPrim(OpName.X, qubits), syndrome, labels[-1])
+      elif op.name == OpName.Z:
+        return stabilizer_test_Z(FTPrim(OpName.Z, qubits), syndrome, labels[-1])
+      else:
         raise ValueError(f"Unrecognized op {op}")
 
-    return reduce(FTComp, [_to_test(op) for op in surface25_stabilizers()]), labels
+    return reduce(FTComp, map(_to_hadamard_test, surface25_stabilizers())), labels
   \end{python}
   %noresult
 
@@ -532,18 +529,18 @@ We split the implementation in several functions:
     \begin{sh}
     printf '\\begin{%s}\n' 'python'
     cat $PROJECT_ROOT/python/qecsurface/qeccs.py | \
-    sedlines.sh -C 'surface25u_correct'
+    sedlines.sh 'surface25u_correct'
     printf '\\end{%s}\n' 'python'
     \end{sh}
   \end{comment}
 
   %result
   \begin{python}
-  def surface25u_correct[Q](data:list[Q], layer0:int, layer:int) -> FTCircuit[Q]
+  def surface25u_correct[Q](data:list[Q], layer0:int, layer:int) -> FTCircuit[Q]:
     """ Build the surface25u error correction circuit assuming `layer` measurememnts are available.
     Use `layer0` measurements as a reference. """
-    def _corrector(op, opc, d)
-      def _cond(msms)
+    def _corrector(op, opc, d):
+      def _cond(msms):
         neigb = [l[2] for l in list(msms.keys()) if l[0]==layer and l[1]==op and (d in l[2])]
         others = [l[2] for l in list(msms.keys()) if l[0]==layer and l[1]==op and (d not in l[2])]
         return reduce(
