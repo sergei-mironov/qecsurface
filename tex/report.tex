@@ -214,49 +214,49 @@ The qecsurface project defines the following main Python modules:
     X = 1
     Z = 2
     H = 3
-  
+
   def opname2str(n:OpName)->str:
     return {OpName.I:'I', OpName.H:'H', OpName.Z:'Z', OpName.X:'X'}[n]
-  
+
   # Common type alias for quantum operations
   type FTOp[Q] = Union["FTInit[Q]", "FTPrim[Q]", "FTCond[Q]", "FTCtrl[Q]", "FTMeasure[Q]",
                        "FTErr[Q]"]
-  
+
   @dataclass
   class FTInit[Q]:
     """ Primitive quantum operation acting on one qubit. """
     qubit:Q
     alpha:complex
     beta:complex
-  
+
   @dataclass
   class FTPrim[Q]:
     """ Primitive quantum operation acting on one qubit. """
     name:OpName
     qubits:list[Q]
-  
+
   @dataclass
   class FTCtrl[Q]:
     """ Quantum control operation acting on two qubits. """
     control:Q
     op:FTOp[Q]
-  
+
   # Syndrome test measurement label encodes a layer, the syndrome type and the qubit labels
   type MeasureLabel[Q] = tuple[int,OpName,tuple[Q,...]]
-  
+
   @dataclass
   class FTMeasure[Q]:
     """ Quantum measure oprtation which acts on a `qubit`. Measurement result is assiciated with a
     `label`. """
     qubit:Q
     label:MeasureLabel[Q]
-  
+
   @dataclass
   class FTCond[Q]:
     """ A quantum operation applied if a classical condition is met. """
     cond:Callable[[dict[MeasureLabel[Q],int]],bool]
     op:FTOp[Q]
-  
+
   @dataclass
   class FTErr[Q]:
     """ Apply an error to `phys` physical qubit constituting the logical qubit Q. """
@@ -280,12 +280,12 @@ The qecsurface project defines the following main Python modules:
   \begin{python}
   # Common type alias for quantum circuits, where Q is type of qubit label.
   type FTCircuit[Q] = Union["FTOps[Q]", "FTComp[Q]"]
-  
+
   @dataclass
   class FTOps[Q]:
     """ A primitive circuit consisting of a tape of operations. """
     ops:list[FTOp[Q]]
-  
+
   @dataclass
   class FTComp[Q]:
     """ Composition of circuits, also known as circuit tensor product. """
@@ -322,8 +322,8 @@ $Map_{a,b}$ base class.
     def map_op(self, op:FTOp[Q1]) -> FTCircuit[Q2]:
       """ Maps an operation of a source circuit into a destination circuit. """
       raise NotImplementedError
-  
-  
+
+
   def map_circuit[Q1,Q2](c:FTCircuit[Q1], m:Map[Q1,Q2]) -> FTCircuit[Q2]:
     """ Maps the circuit `c` by mapping each its operation and taking a compostion """
     def _traverse_op(op:FTOp[Q1], acc) -> None:
@@ -390,7 +390,7 @@ $Map_{a,b}$ base class.
     """ Maps quantum circuit into a quantum circuit with Bitflip quantum error correction. """
     qmap:dict[Q1,tuple[list[Q2],list[Q2]]]
     layer:int = 0
-  
+
     def _next_layer(self) -> int
     def _error_correction_cycle(self, q:Q1) -> FTCircuit[Q2]
     def map_op(self, op:FTOp[Q1]) -> FTCircuit[Q2]
@@ -410,6 +410,68 @@ We implement the Surface25 unified quantum error correction code following \cite
   \label{fig:surface25}
 \end{figure}
 
+
+\subsubsection{Hadamard tests}
+
+The backbone of the suface quantum error correction codes are Hadamard tests projecting the quantum
+state to one of stabilizer eigenstates and revealing its signs. We define these tests as follows:
+
+  \begin{comment}
+    \begin{sh}
+    printf '\\begin{%s}\n' 'python'
+    cat $PROJECT_ROOT/python/qecsurface/qeccs.py | \
+      sedlines.sh 'Stabilizer tests'
+    printf '\\end{%s}\n' 'python'
+    \end{sh}
+  \end{comment}
+
+  %result
+  \begin{python}
+  def stabilizer_test_X[Q](tile:FTPrim[Q], syndrome:Q, ml:MeasureLabel[Q]) -> FTCircuit[Q]:
+    """ Define a stabilizer X-test circuit. """
+    assert tile.name == OpName.X, tile
+    return FTOps([
+      FTPrim(OpName.H, [syndrome]),
+      *[FTCtrl(control=syndrome, op=FTPrim(OpName.X, [qubit_label]))
+        for qubit_label in tile.qubits
+      ],
+      FTPrim(OpName.H, [syndrome]),
+      FTMeasure(qubit=syndrome, label=ml)
+    ])
+
+  def stabilizer_test_Z[Q](tile:FTPrim[Q], syndrome:Q, ml:MeasureLabel[Q]) -> FTCircuit[Q]:
+    """ Define a stabilizer Z-test circuit. """
+    assert tile.name == OpName.Z, tile
+    return FTOps([
+      *[FTCtrl(control=qubit_label, op=FTPrim(OpName.X, [syndrome]))
+        for qubit_label in tile.qubits
+      ],
+      FTMeasure(qubit=syndrome, label=ml)
+    ])
+  \end{python}
+  %noresult
+
+
+  \begin{comment}
+  \begin{python}
+  cPL = to_pennylane_mcm(stabilizer_test_X(FTPrim(OpName.X, [0,1,2]), 3, None))
+  qml.draw_mpl(cPL)()
+  plt.savefig('../img/stabilizer_test_X.png')
+  cPL = to_pennylane_mcm(stabilizer_test_Z(FTPrim(OpName.Z, [0,1,2]), 3, None))
+  qml.draw_mpl(cPL)()
+  plt.savefig('../img/stabilizer_test_Z.png')
+  \end{python}
+
+  \begin{result}
+  \end{result}
+  \end{comment}
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.4\textwidth]{../img/stabilizer_test_X.png}
+  \includegraphics[width=0.4\textwidth]{../img/stabilizer_test_Z.png}
+  \caption{Stabilizer X-test and stabilizer Z-test.}
+\end{figure}
 
 \subsubsection{Error correction code primitives}
 
@@ -493,13 +555,13 @@ stabilizer signs obtained initially.
 We visuzlize the error syndrome before the correction.
 
   \begin{result}
-  
+
   o   o   o
-    o   o 
-  o X o X o
-    o   o 
+    o Z o 
   o   o   o
-  
+    o Z o 
+  o   o   o
+
   \end{result}
 
 We make sure the error is gone by applying the final detection and re-running the simulation.
@@ -512,13 +574,13 @@ We make sure the error is gone by applying the final detection and re-running th
   \end{python}
 
   \begin{result}
-  
+
   o   o   o
     o   o 
   o   o   o
     o   o 
   o   o   o
-  
+
   \end{result}
 
 \subsubsection{High-level interface: circuit mapper}
@@ -542,7 +604,7 @@ Finally, we wrap these functions into the \t{Surface25u} circuit mapper interfac
     _layer: int = 0
     _layers0: dict[Q1, int] = field(default_factory=dict)
     _mls: dict[Q1, list[MeasureLabel]] = field(default_factory=lambda: defaultdict(list))
-  
+
     def _next_layer(self) -> int
     def _error_correction_cycle(self, q:Q1, layer0:int) -> FTCircuit[Q2]
     def map_op(self, op: FTOp[Q1]) -> FTCircuit[Q2]

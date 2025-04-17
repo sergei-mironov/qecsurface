@@ -5,7 +5,7 @@ from dataclasses import field
 from collections import defaultdict
 from .type import *
 
-
+# Stabilizer tests {{{
 def stabilizer_test_X[Q](tile:FTPrim[Q], syndrome:Q, ml:MeasureLabel[Q]) -> FTCircuit[Q]:
   """ Define a stabilizer X-test circuit. """
   assert tile.name == OpName.X, tile
@@ -27,7 +27,7 @@ def stabilizer_test_Z[Q](tile:FTPrim[Q], syndrome:Q, ml:MeasureLabel[Q]) -> FTCi
     ],
     FTMeasure(qubit=syndrome, label=ml)
   ])
-
+#}}}
 
 def surface9[Q](data:list[Q], syndrome:list[Q], layer:int=0) -> FTCircuit[Q]:
   """ Top-left corner of surface25 code, not really supposed to work. """
