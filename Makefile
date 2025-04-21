@@ -1,16 +1,17 @@
 .PHONY: all
 
 TEX = $(shell find tex -name '[^_]*.tex')
-PDF = report.pdf
+PDF = tex/report.pdf
+IPYNB = md/report.ipynb
 
-.PHONY: all $(PDF)
-all: $(PDF)
+.PHONY: all $(PDF) $(IPYNB)
+all: $(PDF) $(IPYNB)
 
 $(PDF):
 	$(MAKE) -C tex $(notdir $@)
 
-$(DEP):
-	-$(MAKE) -p -C tex $(notdir $@)
+$(IPYNB):
+	$(MAKE) -C md $(notdir $@)
 
 .PHONY:help
 help:
