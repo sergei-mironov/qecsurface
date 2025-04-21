@@ -48,15 +48,16 @@ Basic operations
       FTPrim(OpName.H, [1]),                        # Apply Hadamard to qubit 1
       FTCtrl(control=1, op=FTPrim(OpName.X, [2])),  # Entangle qubits 1 and 2
       FTCtrl(control=0, op=FTPrim(OpName.X, [1])),  # Bell state preparation
-      FTMeasure(qubit=0, label="m0"),
-      FTMeasure(qubit=1, label="m1")
+      FTPrim(OpName.H, [0]),                        # Apply Hadamard to qubit 1
+      FTMeasure(qubit=0, label="mZ"),
+      FTMeasure(qubit=1, label="mX")
     ]),
     FTComp(
       FTOps([
-        FTCond(lambda m: m["m0"] == 1, FTPrim(OpName.X, [2]))  # Conditional X based on m0
+        FTCond(lambda m: m["mX"] == 1, FTPrim(OpName.X, [2]))  # Conditional X based on m0
       ]),
       FTOps([
-        FTCond(lambda m: m["m1"] == 1, FTPrim(OpName.Z, [2]))  # Conditional Z based on m1
+        FTCond(lambda m: m["mZ"] == 1, FTPrim(OpName.Z, [2]))  # Conditional Z based on m1
       ])
     )
   )
@@ -66,11 +67,11 @@ Basic operations
 
   <div class="output stream stdout">
   ```result
-  0: ──|Ψ⟩────╭●──┤↗│  │0⟩─────────────────┤            
-  1: ──H───╭●─╰X───║────────┤↗│  │0⟩───────┤            
-  2: ──────╰X──────║─────────║────────X──Z─┤            
-                   ╚═════════║════════╩══║═╡  Sample[MCM]
-                             ╚═══════════╩═╡  Sample[MCM]
+  0: ──|Ψ⟩────╭●──H──┤↗│  │0⟩─────────────────┤            
+  1: ──H───╭●─╰X──────║────────┤↗│  │0⟩───────┤            
+  2: ──────╰X─────────║─────────║────────X──Z─┤            
+                      ╚═════════║════════║══╩═╡  Sample[MCM]
+                                ╚════════╩════╡  Sample[MCM]
   ```
   </div>
 </div>
