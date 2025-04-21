@@ -587,7 +587,8 @@ stabilizer signs obtained initially.
   data, syndrome = list(range(13)), [13]
   layer0, layer1, layer2 = 0, 1, 2
   init, ml1 = surface25u_detect(data, syndrome, layer0)
-  err = FTOps([FTPrim(OpName.H,[6])])
+  err = FTOps([FTPrim(OpName.X,[6]),
+               FTPrim(OpName.Z,[6])])
   detect, ml2 = surface25u_detect(data, syndrome, layer1)
   correct = surface25u_correct(data, layer0, layer1)
   cPL = to_pennylane_mcm(reduce(FTComp, [init, err, detect, correct]))
@@ -600,9 +601,9 @@ We visuzlize the error syndrome before the correction.
   \begin{result}
 
   o   o   o
-    o   o 
+    o Z o 
   o X o X o
-    o   o 
+    o Z o 
   o   o   o
 
   \end{result}
