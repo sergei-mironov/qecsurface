@@ -131,6 +131,14 @@ Pauli group, allowing the stabilizer code to properly define the code space and 
 errors without inherent contradictions.
 \end{itemize}
 
+
+\subsubsection*{Hadamard test}
+
+A good explanation is given in
+\u{Quantum Native Dojo}{https://dojo.qulacs.org/en/latest/notebooks/2.2_Hadamard_test.html}.
+In particular they show why does hadamard test project arbitrary state $\ket{\psi}$ to an eigenvalue
+of the $U$ operation being tested.
+
 \subsection{Setup}
 
 The project could be cloned from the GitHub repository
@@ -685,10 +693,17 @@ simulation?
 
 \vsp
 
+Native PennyLane can not do this, see the
+\u{forum response}{https://discuss.pennylane.ai/t/any-qml-device-supporting-immediate-values-for-mid-circuit-measurements/8426/2}.
+
 As of the time of writing, it appears that PennyLane cannot provide immediate measurement results
 prior to the conclusion of a simulation. Instead, it offers a \t{MeasurementResult} promise, which
 only supports basic operations. See
 \u{Documentation link}{https://docs.pennylane.ai/en/stable/code/api/pennylane.measure.html}.
+
+However, direct access to measurements is possible in PennyLane + Catalyst. Unfortunately, Catalyst
+also requires the Python code to be Catalyst-traceable, so Sergei decided to stay in Python and cope
+with the native limitations.
 
 % \input{_discussions.tex}
 
