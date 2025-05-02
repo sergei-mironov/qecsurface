@@ -27,7 +27,9 @@
       };
       devEnvironment = pkgs.mkShell {
         buildInputs = ([
-          (pkgs.python3.withPackages (p: with p; [ ipython scipy ortools python-lsp-server]))
+          (pkgs.python312.withPackages (p: with p; [
+            ipython scipy ortools python-lsp-server pytest sympy
+          ]))
           texliveFull
         ]) ++
         (with pkgs ; [
