@@ -203,40 +203,52 @@ def surface17u_print(msms:dict[MeasureLabel,int], flt:list[MeasureLabel]):
   ''') % tuple((opname2str(l[1]) if msms[l] == 1 else ' ') for l in flt)
 
 
+def surface20_stabilizers() -> list[FTPrim[int]]:
+  """ Surface20u stabilizers. Qubit labels may be interpreted as indices. """
+  def X(*data):
+    return FTPrim(OpName.X, data)
+  def Z(*data):
+    return FTPrim(OpName.Z, data)
+
+  return [
+    # X and Z stabilizers for surface20
+    Z(0, 1),  # Z on qubits 0 and 1
+    X(1, 2),  # X on qubits 1 and 2
+    Z(0, 3),  # Z on qubits 0 and 3
+    X(0, 1, 3, 4),  # X on qubits 0, 1, 3, 4
+    Z(1, 2, 4, 5),  # Z on qubits 1, 2, 4, 5
+    X(2, 5),  # X on qubits 2 and 5
+    X(3, 6),  # X on qubits 3 and 6
+    Z(3, 4, 6, 7),  # Z on qubits 3, 4, 6, 7
+    X(4, 5, 8, 7),  # X on qubits 4, 5, 8, 7
+    Z(5, 8),  # Z on qubits 5 and 8
+    X(6, 7),  # X on qubits 6 and 7
+    Z(7, 8)   # Z on qubits 7 and 8
+  ]
+
+
 def surface20u_detect[Q](
-  data: list[Q], syndrome: list[Q], layer:int=0
+  data: list[Q], syndromes: list[Q], layer: int = 0
 ) -> tuple[FTCircuit[Q], list[MeasureLabel]]:
-  assert len(data) == 9
-  assert len(syndrome) == 1
-  d0, d1, d2, d3, d4, d5, d6, d7, d8  = [*data]
-  s, = [*syndrome]
+  """ Build the surface20u error detection circuit. Return the circuit alongside with a list of
+  mid-circuit measurement labels. """
+  assert len(data) == 9, f"Expected 9 data qubit labels, got {data}"
+  assert len(syndromes) == 1, f"Expected 1 syndrome qubit label, got {syndromes}"
+  syndrome = syndromes[0]
   labels = []
 
-  def SX(data, syndrome):
-    label = (layer,OpName.X,tuple(data))
+  def _to_hadamard_test(op):
+    qubits = [data[q] for q in op.qubits]
+    label = (layer, op.name, tuple(qubits))
     labels.append(label)
-    return stabilizer_test_X(FTPrim(OpName.X, data), syndrome, label)
-  def SZ(data, syndrome):
-    label = (layer,OpName.Z,tuple(data))
-    labels.append(label)
-    return stabilizer_test_Z(FTPrim(OpName.Z, data), syndrome, label)
+    if op.name == OpName.X:
+      return stabilizer_test_X(FTPrim(OpName.X, qubits), syndrome, label)
+    elif op.name == OpName.Z:
+      return stabilizer_test_Z(FTPrim(OpName.Z, qubits), syndrome, label)
+    else:
+      raise ValueError(f"Unrecognized op {op}")
 
-  tiles = [
-    #SX([d0,d8],s),
-    SZ([d0,d1],s),
-    SX([d1,d2],s),
-    #SZ([d2,d6],s),
-
-    SZ([d0,d3],s),
-    SX([d0,d1,d3,d4],s), SZ([d1,d2,d4,d5],s),
-    SX([d2,d5],s),
-    SX([d3,d6],s),
-    SZ([d3,d4,d6,d7],s), SX([d4,d5,d8,d7],s),
-    SZ([d5,d8],s),
-    SX([d6,d7],s),
-    SZ([d7,d8],s),
-  ]
-  return reduce(FTComp, tiles), labels
+  return reduce(FTComp, map(_to_hadamard_test, surface20u_stabilizers())), labels
 
 
 def surface20u_print(msms:dict[MeasureLabel,int], flt:list[MeasureLabel]):

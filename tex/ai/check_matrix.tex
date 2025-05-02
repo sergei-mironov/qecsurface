@@ -1,0 +1,183 @@
+\subsection{Building Check matrix}
+
+\begin{ai}
+Now, I want to build a stabilizer check matrix for this set of stabilizers. Can
+you remind me what is a check matrix?
+\end{ai}
+
+\begin{airesult}
+\textbf{Check Matrix:}
+
+A \textit{check matrix}, also known as a \textbf{stabilizer matrix} in the context of quantum error correction, is a binary matrix that represents the stabilizer generators of a quantum error correction code.
+
+Each row of the matrix corresponds to a stabilizer generator, and each column corresponds to a physical qubit. The entries in the matrix are binary:
+
+- A '1' entry indicates that the corresponding stabilizer operator acts non-trivially (e.g., using Pauli X or Z) on the qubit.
+- A '0' entry indicates that the corresponding stabilizer operator acts trivially (i.e., using identity I) on the qubit.
+
+For a stabilizer code:
+
+\begin{itemize}
+  \item The first half of the columns correspond to Pauli-X operations.
+  \item The second half of the columns correspond to Pauli-Z operations.
+\end{itemize}
+
+If a stabilizer generator acts with:
+
+\begin{itemize}
+  \item An X operation on a qubit, you set the corresponding column in the first half to 1.
+  \item A Z operation on a qubit, you set the corresponding column in the second half to 1.
+  \item Both X and Z (like in a Y operation, which is iXZ), both parts are set to 1 for that qubit.
+\end{itemize}
+
+\vsp
+
+\textbf{Example:}
+
+Consider a simple code with two stabilizers:
+
+\[
+\begin{array}{ccc|ccc}
+ & & X\, & & & Z\,\\
+\hline
+\text{Stabilizer 1}: & X_1 X_2 & 3& & 0 & 0 \\
+\text{Stabilizer 2}: & Z_2 Z_3 & & 1 & 1 & 1 \\
+\end{array}
+\]
+
+The above is a conceptual idea using a simplified stabilizer set and formatting.
+
+For your \verb|surface25_stabilizers|, you would construct a matrix with each stabilizer as a row
+and each column pair corresponding to the X and Z actions on each qubit. If there are 13 qubits
+(indexed from 0 to 12), your matrix will have 26 columns (13 for X and 13 for Z).
+
+Let me know if you need help constructing a check matrix for the specific stabilizers you've
+defined!
+\end{airesult}
+
+
+\begin{ai}
+Please sketch a Python program which would build a Sympy check
+matrix for a list of stabilizers like the one returned by \verb|surface25_stabilizers|.
+\end{ai}
+
+\begin{airesult}
+To build a SymPy check matrix for a list of stabilizers, such as the ones defined by your
+\verb|surface25_stabilizers| function, we can follow a structured approach. Below is a sketch of the
+Python program that achieves this.
+
+\vsp
+
+\begin{python}
+from sympy import Matrix, zeros
+from enum import Enum
+
+# Assuming FTPrim and OpName are already defined as in your code
+class OpName(Enum):
+  I = 0
+  X = 1
+  Z = 2
+  H = 3
+
+@dataclass
+class FTPrim:
+  name: OpName
+  qubits: list[int]
+
+def surface25_stabilizers():
+  """ Surface25 stabilizers. Qubit labels may be interpreted as indices. """
+  def X(data):
+    return FTPrim(OpName.X, data)
+  def Z(data):
+    return FTPrim(OpName.Z, data)
+  return [
+            X([0,1,3]), X([1,2,4]),
+    Z([0,3,5]), Z([1,3,4,6]), Z([2,4,7]),
+           X([3,5,6,8]), X([4,6,7,9]),
+    Z([5,8,10]), Z([6,8,9,11]), Z([7,9,12]),
+           X([8,10,11]), X([9,11,12]),
+  ]
+
+# Example usage
+stabilizers = surface25_stabilizers()
+num_qubits = 13  # Total number of qubits
+check_matrix = build_check_matrix(stabilizers, num_qubits)
+print(check_matrix)
+\end{python}
+
+\vsp
+
+\textbf{Program Explanation:}
+
+\begin{itemize}
+  \item \textbf{Imports:} The program uses SymPy for matrix operations and defines necessary classes
+        and enumerations such as \verb|OpName| and \verb|FTPrim|.
+
+  \item \textbf{surface25_stabilizers Function:} Defines and returns a list of stabilizer generators
+        using \verb|FTPrim| as each element, specifying the operation (X or Z) and the qubits they
+        act on.
+
+  \item \textbf{build_check_matrix Function:}
+  \begin{itemize}
+    \item Initializes a zero matrix with rows equal to the number of stabilizers and columns twice
+          the number of qubits.
+    \item Iterates over each stabilizer, setting matrix entries to 1 for qubits affected by each X
+          or Z operation.
+    \item Columns from 0 to \textit{num\_qubits - 1} are for X operations, and those from
+          \textit{num\_qubits} onward are for Z operations.
+  \end{itemize}
+
+  \item \textbf{Example Usage:} Demonstrates getting the list of stabilizers, defining the total
+        qubits (13), and constructing the check matrix. The matrix is printed to visualize its
+        structure.
+\end{itemize}
+
+This program will efficiently generate a check matrix for your list of stabilizers using SymPy. Let
+me know if anything needs adjustment or further explanation!
+\end{airesult}
+
+\begin{ai}
+OK, now please setch me a code calculating the rank of a sympy matrix. I plan to use it to determine
+the rank of check matrix.
+\end{ai}
+
+\begin{airesult}
+To calculate the rank of a SymPy matrix, you can use the \verb|rank()| method provided by the SymPy
+library. Here's a simple code snippet to compute the rank of a matrix:
+
+\begin{python}
+from sympy import Matrix
+
+def calculate_matrix_rank(matrix):
+  # Calculate the rank of the matrix using SymPy's rank() method
+  rank = matrix.rank()
+  return rank
+
+# Example usage
+# Define a sample matrix
+example_matrix = Matrix([
+  [1, 0, 0, 1],
+  [0, 1, 1, 0],
+  [1, 1, 0, 0],
+  [0, 0, 1, 1]
+])
+
+# Calculate the rank of the example matrix
+matrix_rank = calculate_matrix_rank(example_matrix)
+print(f"The rank of the matrix is: {matrix_rank}")
+\end{python}
+
+\vsp
+
+\textbf{Explanation:}
+
+\begin{itemize}
+  \item \textbf{Importing Matrix:} Ensure you have SymPy's \verb|Matrix| class available.
+  \item \textbf{Rank Calculation:} The \verb|calculate_matrix_rank| function accepts a SymPy matrix
+and uses the \verb|rank()| method to compute its rank.
+  \item \textbf{Example Usage:} Demonstrates defining a sample matrix and calculating its rank.
+\end{itemize}
+
+You can use this function to determine the rank of any SymPy matrix, such as the check matrix you
+previously generated. Let me know if you need additional information!
+\end{airesult}

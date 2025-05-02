@@ -46,3 +46,30 @@ def to_sympy[Q](circuit: FTCircuit[Q]) -> Matrix:
 
   ops = traverse_circuit(circuit, _traverse_op, [])
   return reduce(lambda a, b: a * b, ops)  # Ensure matrix multiplication for the final unitary
+
+
+def build_check_matrix(stabilizers, zero_labels=None):
+  zero_labels = zero_labels or set()
+  # Initialize a zero matrix with dimensions (num_stabilizers, 2 * num_unique_labels)
+  unique_labels = set(label for op in stabilizers for label in op.qubits) | set(zero_labels)
+  num_stabilizers = len(stabilizers)
+  num_unique_labels = len(unique_labels)
+
+  # Map qubit labels to matrix column indices
+  label_to_index = {label: idx for idx, label in enumerate(sorted(unique_labels))}
+
+  check_matrix = zeros(num_stabilizers, 2 * num_unique_labels)
+
+  for i, op in enumerate(stabilizers):
+    if isinstance(op, FTPrim):
+      if op.name == OpName.X:
+        for q in op.qubits:
+          col_index = label_to_index[q]
+          check_matrix[i, col_index] = 1  # Set X part
+      elif op.name == OpName.Z:
+        for q in op.qubits:
+          col_index = label_to_index[q] + num_unique_labels
+          check_matrix[i, col_index] = 1  # Set Z part
+
+  return check_matrix
+

@@ -1,6 +1,7 @@
 import pytest
 from numpy.testing import assert_allclose
 from qecsurface import *
+from qecsurface.pennylane import *
 from qecsurface.qeccs import (
   surface20u_detect, surface20u_print, surface17u_detect, surface17u_print,
   surface25u_detect, surface25u_print2, surface25u_print, surface25u_correct
