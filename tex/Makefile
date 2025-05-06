@@ -10,7 +10,7 @@ PDF =  $(subst .tex,.pdf,$(TEX))
 .PHONY: all
 all: report.pdf
 
-aitalks.tex: ./ai/check_matrix.tex ./ai/theory.tex
+aitalks.pdf: ./ai/check_matrix.tex ./ai/theory.tex ./ai/quantum_error_correction_conditions.tex
 
 $(TGZ): %.tar.gz: %.tex Makefile $(LIB) $(PY) $(TOP) $(SH)
 	cd $R && tar -czf \
