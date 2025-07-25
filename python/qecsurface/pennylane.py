@@ -10,6 +10,26 @@ from .qeccs import *
 def traverse_ftcircuit[Q](circuit: FTCircuit[Q], msms:dict) -> None:
   """ Translate FTCircuit into PennyLane operations. """
 
+  def _fold_expr(expr: FTExpr[Q]) -> Any:
+      match expr:
+          case FTExprRef():
+              return msms[expr.m]
+          case FTExprFun():
+              args = [_fold_expr(arg) for arg in expr.args]
+              match expr.func:
+                  case "xor":
+                      return reduce(lambda x, y: x != y, args)
+                  case "and":
+                      return reduce(lambda x, y: x & y, args)
+                  case "or":
+                      return reduce(lambda x, y: x | y, args)
+                  case "eq":
+                      return reduce(lambda x, y: x == y, args)
+                  case _:
+                      raise ValueError(f"Unsupported expression function: {expr.func}")
+          case _:
+              raise ValueError(f"Unsupported expression type: {type(expr)}")
+
   def _traverse_op(op: FTOp[Q], msms:dict) -> dict:
     if isinstance(op, FTPrim):
       for q in op.qubits:
@@ -42,9 +62,9 @@ def traverse_ftcircuit[Q](circuit: FTCircuit[Q], msms:dict) -> None:
         raise ValueError(f"Unsupported nested op: {op.op}")
       for q in op.op.qubits:
         if op.op.name == OpName.X:
-          qml.cond(op.cond(msms),qml.PauliX)(wires=q)
+          qml.cond(_fold_expr(op.cond),qml.PauliX)(wires=q)
         elif op.op.name == OpName.Z:
-          qml.cond(op.cond(msms),qml.PauliZ)(wires=q)
+          qml.cond(_fold_expr(op.cond),qml.PauliZ)(wires=q)
         else:
           raise ValueError(f"Unsupported nested op: {op.op}")
     elif isinstance(op, FTErr):
