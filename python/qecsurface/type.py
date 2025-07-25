@@ -41,7 +41,9 @@ class FTCtrl[Q]:
   control:Q
   op:FTOp[Q]
 
-# Syndrome test measurement label encodes a layer, the syndrome type and the qubit labels
+# Syndrome test measurement label encodes the layer number, the syndrome type (typically, X/Z) and
+# the date qubit labels involved in the measuremenr.
+# FIXME: Is it tuple[Q,...] or just Q?
 type MeasureLabel[Q] = tuple[int,OpName,tuple[Q,...]]
 
 @dataclass
@@ -50,6 +52,18 @@ class FTMeasure[Q]:
   `label`. """
   qubit:Q
   label:MeasureLabel[Q]
+
+
+type FTExpr[Q] = Union["FTExprRef[Q]", "FTExprFun[Q]"]
+
+@dataclass
+class FTExprFun[Q]:
+    func: Union["xor", "and", "or", "eq"]
+    args: list[FTExpr[Q]]
+
+@dataclass
+class FTExprRef[Q]:
+    m: MeasureLabel[Q]
 
 @dataclass
 class FTCond[Q]:
