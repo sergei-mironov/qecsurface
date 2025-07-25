@@ -92,7 +92,7 @@ def surface25u_detect[Q](# {{{
   """ Build the surface25u error detection circuit. Return the circuit alongside with a list of
   mid-circuit measurement labels. """
   assert len(data) == 13, f"Expected 13 data qubit labels, got {data}"
-  assert len(syndromes) == 1, f"Expected 1 syndrome qubit label, got {syndrome}"
+  assert len(syndromes) == 1, f"Expected 1 syndrome qubit label, got {syndromes}"
   syndrome = syndromes[0]
   labels = []
 
